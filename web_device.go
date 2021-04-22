@@ -79,11 +79,6 @@ func loadPage(title string) (*Page, error) {
 			}
 		}
 	}
-	/*body, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	return &Page{Title: title, Body: body}, nil */
 	return &Page{Title: title, VSWR: _VSWR, PowerSupplyVoltage: _PowerSupplyVoltage,
 		PowerSupplyConsumption: _PowerSupplyConsumption}, nil
 }

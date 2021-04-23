@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"html/template"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +14,8 @@ type Page struct {
 	VSWR                   []byte
 	PowerSupplyVoltage     []byte
 	PowerSupplyConsumption []byte
+	Temperature            []byte
+	SignalLevel            []byte
 }
 
 func FileExists(filename string) bool {
@@ -41,10 +42,14 @@ func (p *Page) save() error {
 	string_VSWR := string(p.VSWR)
 	string_PowerSupplyVoltage := string(p.PowerSupplyVoltage)
 	string_PowerSupplyConsumption := string(p.PowerSupplyConsumption)
+	string_Temperature := string(p.Temperature)
+	string_SignalLevel := string(p.SignalLevel)
 
 	f.WriteString("[VSWR][" + string_VSWR + "]\n")
 	f.WriteString("[PowerSupplyVoltage][" + string_PowerSupplyVoltage + "]\n")
 	f.WriteString("[PowerSupplyConsumption][" + string_PowerSupplyConsumption + "]\n")
+	f.WriteString("[Temperature][" + string_Temperature + "]\n")
+	f.WriteString("[SignalLevel][" + string_SignalLevel + "]\n")
 	return err
 }
 
@@ -53,17 +58,21 @@ func loadPage(title string) (*Page, error) {
 	filename := title + ".txt"
 	file, err := os.Open(filename)
 
+	if err != nil {
+		file, err = os.Create(filename)
+	}
+
+	check(err)
 	defer file.Close()
 
 	// Start reading from the file with a reader.
-	reader := bufio.NewReader(file)
+	scanner := bufio.NewScanner(file)
 	var line string
 	var _VSWR, _PowerSupplyVoltage, _PowerSupplyConsumption []byte
-	for {
-		line, err = reader.ReadString('\n')
-		if (err != nil && err != io.EOF) || line == "" {
-			break
-		}
+	var _Temperature, _SignalLevel []byte
+
+	for scanner.Scan() {
+		line = scanner.Text()
 		exp := regexp.MustCompile(`\[(.*?)\]\[(.*?)\]`)
 
 		if line != "" {
@@ -77,10 +86,17 @@ func loadPage(title string) (*Page, error) {
 			if match[1] == "PowerSupplyConsumption" {
 				_PowerSupplyConsumption = []byte(match[2])
 			}
+			if match[1] == "Temperature" {
+				_Temperature = []byte(match[2])
+			}
+			if match[1] == "SignalLevel" {
+				_SignalLevel = []byte(match[2])
+			}
 		}
 	}
 	return &Page{Title: title, VSWR: _VSWR, PowerSupplyVoltage: _PowerSupplyVoltage,
-		PowerSupplyConsumption: _PowerSupplyConsumption}, nil
+		PowerSupplyConsumption: _PowerSupplyConsumption, Temperature: _Temperature,
+		SignalLevel: _SignalLevel}, nil
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -105,11 +121,15 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	_VSWR := r.FormValue("VSWR")
 	_PowerSupplyVoltage := r.FormValue("PowerSupplyVoltage")
 	_PowerSupplyConsumption := r.FormValue("PowerSupplyConsumption")
+	_Temperature := r.FormValue("Temperature")
+	_SignalLevel := r.FormValue("SignalLevel")
 
 	p := &Page{Title: title,
 		VSWR:                   []byte(_VSWR),
 		PowerSupplyVoltage:     []byte(_PowerSupplyVoltage),
-		PowerSupplyConsumption: []byte(_PowerSupplyConsumption)}
+		PowerSupplyConsumption: []byte(_PowerSupplyConsumption),
+		Temperature:            []byte(_Temperature),
+		SignalLevel:            []byte(_SignalLevel)}
 	err := p.save()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

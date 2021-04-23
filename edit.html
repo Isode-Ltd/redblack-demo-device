@@ -1,12 +1,18 @@
 <h1>Set parameters for the device [{{.Title}}]</h1>
 
 <form action="/save/{{.Title}}" method="POST">
-<p>VSWR</p>
+<p>Voltage Standing Wave Ratio</p>
 <div><textarea name="VSWR" rows="2" cols="80">{{printf "%s" .VSWR}}</textarea></div>
 <p>Power Supply Voltage</p>
 <div><textarea name="PowerSupplyVoltage" rows="2" cols="80">{{printf "%s" .PowerSupplyVoltage}}</textarea></div>
 <p>Power Supply Consumption</p>
 <div><textarea name="PowerSupplyConsumption" rows="2" cols="80">{{printf "%s" .PowerSupplyConsumption}}</textarea></div>
+<p>Temperature of Radio</p>
+<div><textarea name="Temperature" rows="2" cols="80">{{printf "%s" .Temperature}}</textarea></div>
+<p>Signal Level</p>
+<div><textarea name="SignalLevel" rows="2" cols="80">{{printf "%s" .SignalLevel}}</textarea></div>
+
 <br>
+
 <div><input type="submit" value="Save"></div>
 </form>

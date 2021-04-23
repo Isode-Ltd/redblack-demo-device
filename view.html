@@ -1,16 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link type="text/css" src="css/device.css">
+</head>
+
+<style>
+    table {
+      width:50%;
+    }
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 15px;
+      text-align: left;
+    }
+    #tab-alt tr:nth-child(even) {
+      background-color: #eee;
+    }
+    #tab-alt tr:nth-child(odd) {
+     background-color: #fff;
+    }
+    #tab-alt th {
+      background-color: black;
+      color: white;
+    }
+</style>
+
 <h1>Device [{{.Title}}]</h1>
 
+<table id="tab-alt">
+    <tr>
+      <th>Parameter</th>
+      <th>Value</th>
+    </tr>
+    <tr>
+      <td>Voltage Standing Wave Ratio</td>
+      <td>{{printf "%s" .VSWR}}</td>
+    </tr>
+    <tr>
+      <td>Power Supply Voltage</td>
+      <td>{{printf "%s" .PowerSupplyVoltage}}</td>
+    </tr>
+    <tr>
+      <td>Power Supply Consumption</td>
+      <td>{{printf "%s" .PowerSupplyConsumption}}</td>
+    </tr>
+    <tr>
+      <td>Temperature of Radio</td>
+      <td>{{printf "%s" .Temperature}}</td>
+    </tr>
+    <tr>
+      <td>Signal Level</td>
+      <td>{{printf "%s" .SignalLevel}}</td>
+    </tr>
+</table>
+
 <p>[<a href="/edit/{{.Title}}">Update Parameters</a>]</p>
-
-<p>Voltage Standing Wave Ratio</p>
-<div>{{printf "%s" .VSWR}}</div>
-<p>Power Supply Voltage</p>
-<div>{{printf "%s" .PowerSupplyVoltage}}</div>
-<p>Power Supply Consumption</p>
-<div>{{printf "%s" .PowerSupplyConsumption}}</div>
-<p>Temperature of Radio</p>
-<div>{{printf "%s" .Temperature}}</div>
-<p>Signal Level</p>
-<div>{{printf "%s" .SignalLevel}}</div>
-
-
+</html>

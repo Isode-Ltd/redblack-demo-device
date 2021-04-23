@@ -1,18 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link type="text/css" src="css/device.css">
+</head>
+
+<style>
+    table {
+      width:50%;
+    }
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 15px;
+      text-align: left;
+    }
+    #tab-alt tr:nth-child(even) {
+      background-color: #eee;
+    }
+    #tab-alt tr:nth-child(odd) {
+     background-color: #fff;
+    }
+    #tab-alt th {
+      background-color: black;
+      color: white;
+    }
+
+    .button {
+        background-color: #008CBA; /* Green */
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+</style>
+
+<body>
 <h1>Set parameters for the device [{{.Title}}]</h1>
 
 <form action="/save/{{.Title}}" method="POST">
-<p>Voltage Standing Wave Ratio</p>
-<div><textarea name="VSWR" rows="2" cols="80">{{printf "%s" .VSWR}}</textarea></div>
-<p>Power Supply Voltage</p>
-<div><textarea name="PowerSupplyVoltage" rows="2" cols="80">{{printf "%s" .PowerSupplyVoltage}}</textarea></div>
-<p>Power Supply Consumption</p>
-<div><textarea name="PowerSupplyConsumption" rows="2" cols="80">{{printf "%s" .PowerSupplyConsumption}}</textarea></div>
-<p>Temperature of Radio</p>
-<div><textarea name="Temperature" rows="2" cols="80">{{printf "%s" .Temperature}}</textarea></div>
-<p>Signal Level</p>
-<div><textarea name="SignalLevel" rows="2" cols="80">{{printf "%s" .SignalLevel}}</textarea></div>
+    <table id="tab-alt">
+        <tr>
+            <th>Parameter</th>
+            <th>Value</th>
+        </tr>
+        <tr>
+            <td>Voltage Standing Wave Ratio</td>
+            <td><textarea name="VSWR" rows="2" cols="10">{{printf "%s" .VSWR}}</textarea></td>
+        </tr>
+        <tr>
+            <td>Power Supply Voltage</td>
+            <td><textarea name="PowerSupplyVoltage" rows="2" cols="10">{{printf "%s" .PowerSupplyVoltage}}</textarea></td>
+        </tr>
+        <tr>
+            <td>Power Supply Consumption</td>
+            <td><textarea name="PowerSupplyConsumption" rows="2" cols="10">{{printf "%s" .PowerSupplyConsumption}}</textarea></td>
+        </tr>
+        <tr>
+            <td>Temperature of Radio</td>
+            <td><textarea name="Temperature" rows="2" cols="10">{{printf "%s" .Temperature}}</textarea></td>
+        </tr>
+        <tr>
+            <td>Signal Level</td>
+            <td><textarea name="SignalLevel" rows="2" cols="10">{{printf "%s" .SignalLevel}}</textarea></td>
+        </tr>
+    </table>
+    <br>
+    <div><input class="button" type="submit" value="Save"></div>
 
-<br>
-
-<div><input type="submit" value="Save"></div>
 </form>
+</body>
+</html>

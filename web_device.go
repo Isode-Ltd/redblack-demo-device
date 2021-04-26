@@ -13,13 +13,13 @@ import (
 
 type DeviceStatus struct {
 	// Device name
-	Name string
+	Name string `json:"name"`
 	// Status parameters
-	VSWR                   []byte
-	PowerSupplyVoltage     []byte
-	PowerSupplyConsumption []byte
-	Temperature            []byte
-	SignalLevel            []byte
+	VSWR                   string `json:"vswr"`
+	PowerSupplyVoltage     string `json:"powersupplyvoltage"`
+	PowerSupplyConsumption string `json:"powersupplyconsumption"`
+	Temperature            string `json:"temperature"`
+	SignalLevel            string `json:"signallevel"`
 }
 
 func check(e error) {
@@ -35,17 +35,17 @@ func (p *DeviceStatus) save() error {
 	check(err)
 	defer f.Close()
 
-	string_VSWR := string(p.VSWR)
-	string_PowerSupplyVoltage := string(p.PowerSupplyVoltage)
-	string_PowerSupplyConsumption := string(p.PowerSupplyConsumption)
-	string_Temperature := string(p.Temperature)
-	string_SignalLevel := string(p.SignalLevel)
+	VSWR := p.VSWR
+	PowerSupplyVoltage := p.PowerSupplyVoltage
+	PowerSupplyConsumption := p.PowerSupplyConsumption
+	Temperature := p.Temperature
+	SignalLevel := p.SignalLevel
 
-	f.WriteString("[VSWR][" + string_VSWR + "]\n")
-	f.WriteString("[PowerSupplyVoltage][" + string_PowerSupplyVoltage + "]\n")
-	f.WriteString("[PowerSupplyConsumption][" + string_PowerSupplyConsumption + "]\n")
-	f.WriteString("[Temperature][" + string_Temperature + "]\n")
-	f.WriteString("[SignalLevel][" + string_SignalLevel + "]\n")
+	f.WriteString("[VSWR][" + VSWR + "]\n")
+	f.WriteString("[PowerSupplyVoltage][" + PowerSupplyVoltage + "]\n")
+	f.WriteString("[PowerSupplyConsumption][" + PowerSupplyConsumption + "]\n")
+	f.WriteString("[Temperature][" + Temperature + "]\n")
+	f.WriteString("[SignalLevel][" + SignalLevel + "]\n")
 	return err
 }
 
@@ -64,8 +64,8 @@ func loadDeviceStatus(name string) (*DeviceStatus, error) {
 	// Start reading from the file with a reader.
 	scanner := bufio.NewScanner(file)
 	var line string
-	var _VSWR, _PowerSupplyVoltage, _PowerSupplyConsumption []byte
-	var _Temperature, _SignalLevel []byte
+	var val_VSWR, val_PowerSupplyVoltage, val_PowerSupplyConsumption string
+	var val_Temperature, val_SignalLevel string
 
 	for scanner.Scan() {
 		line = scanner.Text()
@@ -74,25 +74,25 @@ func loadDeviceStatus(name string) (*DeviceStatus, error) {
 		if line != "" {
 			match := exp.FindStringSubmatch(line)
 			if match[1] == "VSWR" {
-				_VSWR = []byte(match[2])
+				val_VSWR = match[2]
 			}
 			if match[1] == "PowerSupplyVoltage" {
-				_PowerSupplyVoltage = []byte(match[2])
+				val_PowerSupplyVoltage = match[2]
 			}
 			if match[1] == "PowerSupplyConsumption" {
-				_PowerSupplyConsumption = []byte(match[2])
+				val_PowerSupplyConsumption = match[2]
 			}
 			if match[1] == "Temperature" {
-				_Temperature = []byte(match[2])
+				val_Temperature = match[2]
 			}
 			if match[1] == "SignalLevel" {
-				_SignalLevel = []byte(match[2])
+				val_SignalLevel = match[2]
 			}
 		}
 	}
-	return &DeviceStatus{Name: name, VSWR: _VSWR, PowerSupplyVoltage: _PowerSupplyVoltage,
-		PowerSupplyConsumption: _PowerSupplyConsumption, Temperature: _Temperature,
-		SignalLevel: _SignalLevel}, nil
+	return &DeviceStatus{Name: name, VSWR: val_VSWR, PowerSupplyVoltage: val_PowerSupplyVoltage,
+		PowerSupplyConsumption: val_PowerSupplyConsumption, Temperature: val_Temperature,
+		SignalLevel: val_SignalLevel}, nil
 }
 
 func ViewHandler(w http.ResponseWriter, r *http.Request, name string) {
@@ -114,18 +114,18 @@ func EditHandler(w http.ResponseWriter, r *http.Request, name string) {
 
 func SaveHandler(w http.ResponseWriter, r *http.Request, name string) {
 
-	_VSWR := r.FormValue("VSWR")
-	_PowerSupplyVoltage := r.FormValue("PowerSupplyVoltage")
-	_PowerSupplyConsumption := r.FormValue("PowerSupplyConsumption")
-	_Temperature := r.FormValue("Temperature")
-	_SignalLevel := r.FormValue("SignalLevel")
+	val_VSWR := r.FormValue("VSWR")
+	val_PowerSupplyVoltage := r.FormValue("PowerSupplyVoltage")
+	val_PowerSupplyConsumption := r.FormValue("PowerSupplyConsumption")
+	val_Temperature := r.FormValue("Temperature")
+	val_SignalLevel := r.FormValue("SignalLevel")
 
 	p := &DeviceStatus{Name: name,
-		VSWR:                   []byte(_VSWR),
-		PowerSupplyVoltage:     []byte(_PowerSupplyVoltage),
-		PowerSupplyConsumption: []byte(_PowerSupplyConsumption),
-		Temperature:            []byte(_Temperature),
-		SignalLevel:            []byte(_SignalLevel)}
+		VSWR:                   val_VSWR,
+		PowerSupplyVoltage:     val_PowerSupplyVoltage,
+		PowerSupplyConsumption: val_PowerSupplyConsumption,
+		Temperature:            val_Temperature,
+		SignalLevel:            val_SignalLevel}
 
 	err := p.save()
 	if err != nil {

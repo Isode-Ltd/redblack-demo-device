@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -159,11 +158,10 @@ func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 
 func ReturnStatus(w http.ResponseWriter, r *http.Request) {
 	device_status, err := loadDeviceStatus("radio")
-	fmt.Println(device_status)
+
 	if err == nil {
-		status_data, err := json.Marshal(device_status)
-		check(err)
-		fmt.Println(string(status_data))
+		// status_data, err := json.Marshal(device_status)
+		json.NewEncoder(w).Encode(device_status)
 	}
 }
 

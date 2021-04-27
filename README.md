@@ -17,5 +17,5 @@ Browser URL : http://localhost:8080/view/radio
 
 #### Fetch the status of the device
 ```bash
-$ curl -X get "http://localhost:8080/status"
+$ curl -X GET "http://localhost:8080/status/radio"
 ```

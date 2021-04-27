@@ -3,22 +3,35 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 type DeviceStatus struct {
 	// Device name
-	Name string `json:"name"`
+	Device string `json:"device"`
 	// Status parameters
 	VSWR                   string `json:"vswr"`
 	PowerSupplyVoltage     string `json:"powersupplyvoltage"`
 	PowerSupplyConsumption string `json:"powersupplyconsumption"`
 	Temperature            string `json:"temperature"`
 	SignalLevel            string `json:"signallevel"`
+}
+
+type DeviceControl struct {
+	// Device name
+	Device string `json:"name"`
+	// Status parameters
+	Frequency        string `json:"frequency"`
+	TranmissionPower string `json:"tranmissionpower"`
+	Modem            string `json:"modem"`
+	Antenna          string `json:"antenna"`
 }
 
 func check(e error) {
@@ -28,7 +41,7 @@ func check(e error) {
 }
 
 func (p *DeviceStatus) save() error {
-	filename := p.Name + ".txt"
+	filename := p.Device + ".txt"
 
 	f, err := os.Create(filename)
 	check(err)
@@ -48,9 +61,9 @@ func (p *DeviceStatus) save() error {
 	return err
 }
 
-func loadDeviceStatus(name string) (*DeviceStatus, error) {
+func loadDeviceStatus(device string) (*DeviceStatus, error) {
 
-	filename := name + ".txt"
+	filename := device + ".txt"
 	file, err := os.Open(filename)
 
 	if err != nil {
@@ -89,29 +102,31 @@ func loadDeviceStatus(name string) (*DeviceStatus, error) {
 			}
 		}
 	}
-	return &DeviceStatus{Name: name, VSWR: val_VSWR, PowerSupplyVoltage: val_PowerSupplyVoltage,
+	return &DeviceStatus{Device: device, VSWR: val_VSWR, PowerSupplyVoltage: val_PowerSupplyVoltage,
 		PowerSupplyConsumption: val_PowerSupplyConsumption, Temperature: val_Temperature,
 		SignalLevel: val_SignalLevel}, nil
 }
 
-func ViewHandler(w http.ResponseWriter, r *http.Request, name string) {
-	p, err := loadDeviceStatus(name)
+func ViewHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
+	p, err := loadDeviceStatus(ps.ByName("device"))
 	if err != nil {
-		http.Redirect(w, r, "/edit/"+name, http.StatusFound)
+		http.Redirect(w, r, "/edit/"+ps.ByName("device"), http.StatusFound)
 		return
 	}
 	RenderTemplate(w, "view", p)
 }
 
-func EditHandler(w http.ResponseWriter, r *http.Request, name string) {
-	p, err := loadDeviceStatus(name)
+func EditHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
+	p, err := loadDeviceStatus(ps.ByName("device"))
 	if err != nil {
-		p = &DeviceStatus{Name: name}
+		p = &DeviceStatus{Device: ps.ByName("device")}
 	}
 	RenderTemplate(w, "edit", p)
 }
 
-func SaveHandler(w http.ResponseWriter, r *http.Request, name string) {
+func SaveHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	val_VSWR := r.FormValue("VSWR")
 	val_PowerSupplyVoltage := r.FormValue("PowerSupplyVoltage")
@@ -119,7 +134,7 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, name string) {
 	val_Temperature := r.FormValue("Temperature")
 	val_SignalLevel := r.FormValue("SignalLevel")
 
-	p := &DeviceStatus{Name: name,
+	p := &DeviceStatus{Device: ps.ByName("device"),
 		VSWR:                   val_VSWR,
 		PowerSupplyVoltage:     val_PowerSupplyVoltage,
 		PowerSupplyConsumption: val_PowerSupplyConsumption,
@@ -131,7 +146,7 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, name string) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	http.Redirect(w, r, "/view/"+name, http.StatusFound)
+	http.Redirect(w, r, "/view/"+ps.ByName("device"), http.StatusFound)
 }
 
 var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
@@ -156,20 +171,27 @@ func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	}
 }
 
-func ReturnStatus(w http.ResponseWriter, r *http.Request) {
-	device_status, err := loadDeviceStatus("radio")
+func ReturnStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
+	//fmt.Println(ps.ByName("device"))
+	device_status, err := loadDeviceStatus(ps.ByName("device"))
+	//fmt.Println(device_status)
 	if err == nil {
 		// status_data, err := json.Marshal(device_status)
 		json.NewEncoder(w).Encode(device_status)
 	}
 }
 
-func main() {
+func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	fmt.Fprint(w, "Welcome!\n")
+}
 
-	http.HandleFunc("/view/", MakeHandler(ViewHandler))
-	http.HandleFunc("/edit/", MakeHandler(EditHandler))
-	http.HandleFunc("/save/", MakeHandler(SaveHandler))
-	http.HandleFunc("/status", ReturnStatus)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+func main() {
+	router := httprouter.New()
+	router.GET("/", Index)
+	router.GET("/view/:device", ViewHandler)
+	router.GET("/edit/:device", EditHandler)
+	router.POST("/save/:device", SaveHandler)
+	router.GET("/status/:device", ReturnStatus)
+	log.Fatal(http.ListenAndServe(":8080", router))
 }

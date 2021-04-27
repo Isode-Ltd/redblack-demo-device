@@ -13,25 +13,20 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type DeviceStatus struct {
-	// Device name
-	Device string `json:"device"`
+type Device struct {
+	// Device Type
+	DeviceType string `json:"devicetype"`
 	// Status parameters
 	VSWR                   string `json:"vswr"`
 	PowerSupplyVoltage     string `json:"powersupplyvoltage"`
 	PowerSupplyConsumption string `json:"powersupplyconsumption"`
 	Temperature            string `json:"temperature"`
 	SignalLevel            string `json:"signallevel"`
-}
-
-type DeviceControl struct {
-	// Device name
-	Device string `json:"name"`
-	// Status parameters
-	Frequency        string `json:"frequency"`
-	TranmissionPower string `json:"tranmissionpower"`
-	Modem            string `json:"modem"`
-	Antenna          string `json:"antenna"`
+	// Control parameters
+	Frequency         string `json:"frequency"`
+	TransmissionPower string `json:"transmissionpower"`
+	Modem             string `json:"modem"`
+	Antenna           string `json:"antenna"`
 }
 
 func check(e error) {
@@ -40,8 +35,8 @@ func check(e error) {
 	}
 }
 
-func (p *DeviceStatus) save() error {
-	filename := p.Device + ".txt"
+func (p *Device) save() error {
+	filename := p.DeviceType + ".txt"
 
 	f, err := os.Create(filename)
 	check(err)
@@ -61,9 +56,9 @@ func (p *DeviceStatus) save() error {
 	return err
 }
 
-func loadDeviceStatus(device string) (*DeviceStatus, error) {
+func LoadDeviceInfo(devicetype string) (*Device, error) {
 
-	filename := device + ".txt"
+	filename := devicetype + ".txt"
 	file, err := os.Open(filename)
 
 	if err != nil {
@@ -102,28 +97,28 @@ func loadDeviceStatus(device string) (*DeviceStatus, error) {
 			}
 		}
 	}
-	return &DeviceStatus{Device: device, VSWR: val_VSWR, PowerSupplyVoltage: val_PowerSupplyVoltage,
+	return &Device{DeviceType: devicetype, VSWR: val_VSWR, PowerSupplyVoltage: val_PowerSupplyVoltage,
 		PowerSupplyConsumption: val_PowerSupplyConsumption, Temperature: val_Temperature,
 		SignalLevel: val_SignalLevel}, nil
 }
 
 func ViewHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-	p, err := loadDeviceStatus(ps.ByName("device"))
+	device_info, err := LoadDeviceInfo(ps.ByName("device"))
 	if err != nil {
 		http.Redirect(w, r, "/edit/"+ps.ByName("device"), http.StatusFound)
 		return
 	}
-	RenderTemplate(w, "view", p)
+	RenderTemplate(w, "view", device_info)
 }
 
 func EditHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-	p, err := loadDeviceStatus(ps.ByName("device"))
+	device_info, err := LoadDeviceInfo(ps.ByName("device"))
 	if err != nil {
-		p = &DeviceStatus{Device: ps.ByName("device")}
+		device_info = &Device{DeviceType: ps.ByName("device")}
 	}
-	RenderTemplate(w, "edit", p)
+	RenderTemplate(w, "edit", device_info)
 }
 
 func SaveHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -134,7 +129,7 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	val_Temperature := r.FormValue("Temperature")
 	val_SignalLevel := r.FormValue("SignalLevel")
 
-	p := &DeviceStatus{Device: ps.ByName("device"),
+	p := &Device{DeviceType: ps.ByName("device"),
 		VSWR:                   val_VSWR,
 		PowerSupplyVoltage:     val_PowerSupplyVoltage,
 		PowerSupplyConsumption: val_PowerSupplyConsumption,
@@ -151,8 +146,9 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
 
-func RenderTemplate(w http.ResponseWriter, tmpl string, p *DeviceStatus) {
-	err := templates.ExecuteTemplate(w, tmpl+".html", p)
+func RenderTemplate(w http.ResponseWriter, tmpl string,
+	params *Device) {
+	err := templates.ExecuteTemplate(w, tmpl+".html", params)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -173,29 +169,29 @@ func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 
 func GetDeviceStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-	device_status, err := loadDeviceStatus(ps.ByName("device"))
+	device_info, err := LoadDeviceInfo(ps.ByName("device"))
 
 	if err == nil {
-		json.NewEncoder(w).Encode(device_status)
+		json.NewEncoder(w).Encode(device_info)
 	}
 }
 
 func GetParamValue(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-	device_status, err := loadDeviceStatus(ps.ByName("device"))
+	device_info, err := LoadDeviceInfo(ps.ByName("device"))
 	param := ps.ByName("param")
 
 	if err == nil {
-		if param == "VSWR" {
-			json.NewEncoder(w).Encode(device_status.VSWR)
-		} else if param == "PowerSupplyVoltage" {
-			json.NewEncoder(w).Encode(device_status.PowerSupplyVoltage)
-		} else if param == "PowerSupplyConsumption" {
-			json.NewEncoder(w).Encode(device_status.PowerSupplyConsumption)
-		} else if param == "SignalLevel" {
-			json.NewEncoder(w).Encode(device_status.SignalLevel)
-		} else if param == "Temperature" {
-			json.NewEncoder(w).Encode(device_status.Temperature)
+		if param == "vswr" {
+			json.NewEncoder(w).Encode(device_info.VSWR)
+		} else if param == "powersupplyvoltage" {
+			json.NewEncoder(w).Encode(device_info.PowerSupplyVoltage)
+		} else if param == "powersupplyconsumption" {
+			json.NewEncoder(w).Encode(device_info.PowerSupplyConsumption)
+		} else if param == "signallevel" {
+			json.NewEncoder(w).Encode(device_info.SignalLevel)
+		} else if param == "temperature" {
+			json.NewEncoder(w).Encode(device_info.Temperature)
 		}
 	}
 }
@@ -209,7 +205,7 @@ func main() {
 	router.GET("/", Index)
 	router.GET("/view/:device", ViewHandler)
 	router.GET("/edit/:device", EditHandler)
-	router.POST("/save/:device", SaveHandler)
+	router.GET("/save/:device", SaveHandler)
 	router.GET("/device/:device/param/:param", GetParamValue)
 	router.GET("/device/:device", GetDeviceStatus)
 	log.Fatal(http.ListenAndServe(":8080", router))

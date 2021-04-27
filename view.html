@@ -40,11 +40,11 @@
     }
 </style>
 
-<h1>Device [{{.Device}}]</h1>
+<h1>Device [{{.DeviceType}}]</h1>
 
 <table id="tab-alt">
     <tr>
-      <th>Parameter</th>
+      <th>Status Parameters</th>
       <th>Value</th>
     </tr>
     <tr>
@@ -69,8 +69,32 @@
     </tr>
 </table>
 <br>
-<form action="/edit/{{.Device}}">
+<form action="/edit/{{.DeviceType}}">
   <input class="button" type="submit" value="Update Parameters" />
 </form>
+
+<br><br><br>
+<table id="tab-alt">
+  <tr>
+    <th>Control Parameters</th>
+    <th>Value</th>
+  </tr>
+  <tr>
+    <td>Frequency</td>
+    <td>{{printf "%s" .Frequency}}</td>
+  </tr>
+  <tr>
+    <td>Transmission Power</td>
+    <td>{{printf "%s" .TransmissionPower}}</td>
+  </tr>
+  <tr>
+    <td>Modem</td>
+    <td>{{printf "%s" .Modem}}</td>
+  </tr>
+  <tr>
+    <td>Antenna</td>
+    <td>{{printf "%s" .Antenna}}</td>
+  </tr>
+</table>
 
 </html>

@@ -35,9 +35,9 @@ Example:
 $ curl -X GET "http://localhost:8080/device/radio"
 {"device":"radio","vswr":"1","powersupplyvoltage":"2","powersupplyconsumption":"3","temperature":"4","signallevel":"5"}
 
-$ curl -X GET "http://localhost:8080/device/radio/param/SignalLevel"
+$ curl -X GET "http://localhost:8080/device/radio/param/signallevel"
 "5"
 
-$ curl -X GET "http://localhost:8080/device/radio/param/VSWR"
+$ curl -X GET "http://localhost:8080/device/radio/param/vswr"
 "1"
 ```

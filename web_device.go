@@ -171,14 +171,32 @@ func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	}
 }
 
-func ReturnStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetDeviceStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-	//fmt.Println(ps.ByName("device"))
 	device_status, err := loadDeviceStatus(ps.ByName("device"))
-	//fmt.Println(device_status)
+
 	if err == nil {
-		// status_data, err := json.Marshal(device_status)
 		json.NewEncoder(w).Encode(device_status)
+	}
+}
+
+func GetParamValue(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
+	device_status, err := loadDeviceStatus(ps.ByName("device"))
+	param := ps.ByName("param")
+
+	if err == nil {
+		if param == "VSWR" {
+			json.NewEncoder(w).Encode(device_status.VSWR)
+		} else if param == "PowerSupplyVoltage" {
+			json.NewEncoder(w).Encode(device_status.PowerSupplyVoltage)
+		} else if param == "PowerSupplyConsumption" {
+			json.NewEncoder(w).Encode(device_status.PowerSupplyConsumption)
+		} else if param == "SignalLevel" {
+			json.NewEncoder(w).Encode(device_status.SignalLevel)
+		} else if param == "Temperature" {
+			json.NewEncoder(w).Encode(device_status.Temperature)
+		}
 	}
 }
 
@@ -192,6 +210,7 @@ func main() {
 	router.GET("/view/:device", ViewHandler)
 	router.GET("/edit/:device", EditHandler)
 	router.POST("/save/:device", SaveHandler)
-	router.GET("/status/:device", ReturnStatus)
+	router.GET("/device/:device/param/:param", GetParamValue)
+	router.GET("/device/:device", GetDeviceStatus)
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

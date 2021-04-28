@@ -41,3 +41,11 @@ $ curl -X GET "http://localhost:8080/device/radio/param/signallevel"
 $ curl -X GET "http://localhost:8080/device/radio/param/vswr"
 "1"
 ```
+
+#### Set the control parameters of the device
+Example:
+```bash
+$ curl --header "Content-Type: application/json" -X POST "http://localhost:8080/device/radio/control" --data '{"frequency":"15","transmissionpower":"100", "modem":"Audio", "antenna":"RF"}'
+```
+View the updated parameters
+Browser URL : http://localhost:8080/view/radio

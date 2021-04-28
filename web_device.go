@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -36,7 +37,7 @@ func check(e error) {
 }
 
 func (p *Device) save() error {
-	filename := p.DeviceType + ".txt"
+	filename := p.DeviceType + ".status"
 
 	f, err := os.Create(filename)
 	check(err)
@@ -58,18 +59,18 @@ func (p *Device) save() error {
 
 func LoadDeviceInfo(devicetype string) (*Device, error) {
 
-	filename := devicetype + ".txt"
-	file, err := os.Open(filename)
+	// Read the status parameters of the device
+	filename := devicetype + ".status"
+	status_file, err := os.Open(filename)
 
 	if err != nil {
-		file, err = os.Create(filename)
+		status_file, err = os.Create(filename)
 	}
 
 	check(err)
-	defer file.Close()
+	defer status_file.Close()
 
-	// Start reading from the file with a reader.
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(status_file)
 	var line string
 	var val_VSWR, val_PowerSupplyVoltage, val_PowerSupplyConsumption string
 	var val_Temperature, val_SignalLevel string
@@ -97,9 +98,46 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 			}
 		}
 	}
+
+	// Read the contorl parameters of the device
+	filename = devicetype + ".control"
+	control_file, err := os.Open(filename)
+
+	if err != nil {
+		status_file, err = os.Create(filename)
+	}
+
+	check(err)
+	defer control_file.Close()
+
+	scanner = bufio.NewScanner(control_file)
+	var val_Frequency, val_TransmissionPower, val_Modem, val_Antenna string
+
+	for scanner.Scan() {
+		line = scanner.Text()
+		exp := regexp.MustCompile(`\[(.*?)\]\[(.*?)\]`)
+
+		if line != "" {
+			match := exp.FindStringSubmatch(line)
+			if match[1] == "Frequency" {
+				val_Frequency = match[2]
+			}
+			if match[1] == "TransmissionPower" {
+				val_TransmissionPower = match[2]
+			}
+			if match[1] == "Modem" {
+				val_Modem = match[2]
+			}
+			if match[1] == "Antenna" {
+				val_Antenna = match[2]
+			}
+		}
+	}
+
 	return &Device{DeviceType: devicetype, VSWR: val_VSWR, PowerSupplyVoltage: val_PowerSupplyVoltage,
 		PowerSupplyConsumption: val_PowerSupplyConsumption, Temperature: val_Temperature,
-		SignalLevel: val_SignalLevel}, nil
+		SignalLevel: val_SignalLevel, Frequency: val_Frequency,
+		TransmissionPower: val_TransmissionPower, Modem: val_Modem, Antenna: val_Antenna}, nil
 }
 
 func ViewHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -176,7 +214,7 @@ func GetDeviceStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	}
 }
 
-func GetParamValue(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetStatusParam(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	device_info, err := LoadDeviceInfo(ps.ByName("device"))
 	param := ps.ByName("param")
@@ -196,6 +234,48 @@ func GetParamValue(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	}
 }
 
+func SetControlParam(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// Create a map of string to arbitary data type
+	var control_params map[string]string
+	req_body, _ := ioutil.ReadAll(r.Body)
+	if err := json.Unmarshal(req_body, &control_params); err != nil {
+		panic(err)
+	}
+
+	device_info, err := LoadDeviceInfo(ps.ByName("device"))
+	var val_Frequency, val_TransmissionPower, val_Modem, val_Antenna string
+
+	// Fetch the control parameters before overwriting the file
+	val_Frequency = device_info.Frequency
+	val_TransmissionPower = device_info.TransmissionPower
+	val_Modem = device_info.Modem
+	val_Antenna = device_info.Antenna
+
+	filename := device_info.DeviceType + ".control"
+
+	f, err := os.Create(filename)
+	check(err)
+	defer f.Close()
+
+	if val, ok := control_params["frequency"]; ok {
+		val_Frequency = val
+	}
+	if val, ok := control_params["transmissionpower"]; ok {
+		val_TransmissionPower = val
+	}
+	if val, ok := control_params["modem"]; ok {
+		val_Modem = val
+	}
+	if val, ok := control_params["antenna"]; ok {
+		val_Antenna = val
+	}
+
+	f.WriteString("[Frequency][" + val_Frequency + "]\n")
+	f.WriteString("[TransmissionPower][" + val_TransmissionPower + "]\n")
+	f.WriteString("[Modem][" + val_Modem + "]\n")
+	f.WriteString("[Antenna][" + val_Antenna + "]\n")
+}
+
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Fprint(w, "Welcome!\n")
 }
@@ -206,7 +286,8 @@ func main() {
 	router.GET("/view/:device", ViewHandler)
 	router.GET("/edit/:device", EditHandler)
 	router.GET("/save/:device", SaveHandler)
-	router.GET("/device/:device/param/:param", GetParamValue)
+	router.GET("/device/:device/param/:param", GetStatusParam)
 	router.GET("/device/:device", GetDeviceStatus)
+	router.POST("/device/:device/control", SetControlParam)
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

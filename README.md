@@ -48,4 +48,6 @@ Example:
 $ curl --header "Content-Type: application/json" -X POST "http://localhost:8080/device/radio/control" --data '{"frequency":"15","transmissionpower":"100", "modem":"Audio", "antenna":"RF"}'
 ```
 View the updated parameters
+```bash
 Browser URL : http://localhost:8080/view/radio
+```

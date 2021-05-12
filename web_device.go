@@ -54,6 +54,15 @@ func (p *Device) save() error {
 	f.WriteString("[PowerSupplyConsumption][" + PowerSupplyConsumption + "]\n")
 	f.WriteString("[Temperature][" + Temperature + "]\n")
 	f.WriteString("[SignalLevel][" + SignalLevel + "]\n")
+
+	f, err = os.OpenFile(p.DeviceType+".log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err)
+	}
+	defer f.Close()
+	if _, err := f.WriteString("text to append\n"); err != nil {
+		log.Println(err)
+	}
 	return err
 }
 
@@ -238,6 +247,10 @@ func SetControlParam(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	// Create a map of string to arbitary data type
 	var control_params map[string]string
 	req_body, _ := ioutil.ReadAll(r.Body)
+	fmt.Println("==================================")
+	fmt.Println(r.Body)
+	fmt.Println(string(req_body))
+	fmt.Println("==================================")
 	if err := json.Unmarshal(req_body, &control_params); err != nil {
 		panic(err)
 	}
@@ -274,6 +287,7 @@ func SetControlParam(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	f.WriteString("[TransmissionPower][" + val_TransmissionPower + "]\n")
 	f.WriteString("[Modem][" + val_Modem + "]\n")
 	f.WriteString("[Antenna][" + val_Antenna + "]\n")
+	fmt.Fprint(w, "Device parameters updated !\n")
 }
 
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {

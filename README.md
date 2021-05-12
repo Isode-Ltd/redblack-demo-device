@@ -51,3 +51,37 @@ View the updated parameters
 ```bash
 Browser URL : http://localhost:8080/view/radio
 ```
+
+#### Rudimentary Boost::ASIO based HTTP Get and Post clients
+Compile the cpp files with Boost lib 1.76.0
+
+For fetching the device parameters
+```bash
+
+$ g++ get-radio-driver-http.cpp -lpthread -o get
+
+$ ./get localhost 8080 /device/radio
+HTTP/1.1 200 OK
+Date: Wed, 12 May 2021 11:16:00 GMT
+Content-Length: 213
+Content-Type: text/plain; charset=utf-8
+
+{"devicetype":"radio","vswr":"10","powersupplyvoltage":"21","powersupplyconsumption":"31","temperature":"44","signallevel":"51","frequency":"100","transmissionpower":"100000000000","modem":"Audio","antenna":"RF"}
+```
+
+For setting the device parameters
+```bash
+$ g++ post-radio-driver-http.cpp -lpthread -o post
+```
+Note : Currently the parameters are hard-coded in the file. This would change later as things progress
+
+```
+$ ./post localhost 8080 /device/radio/control
+JSON Message : {"frequency":"100","modem":"Audio"}
+HTTP/1.1 200 OK
+Date: Wed, 12 May 2021 11:23:44 GMT
+Content-Length: 28
+Content-Type: text/plain; charset=utf-8
+
+Device parameters updated !
+```

@@ -13,16 +13,22 @@
 
 namespace pt = boost::property_tree;
 
-class device_params {
-    public:
-    std::string m_device_type;         // device type
-    std::string m_device_family;       // device family
+class Driver {
+
+    private:
+    /* Store the device information */
+    std::string m_device_type;            // device type
+    std::string m_device_family;          // device family
     std::set<std::string> status_params;  // device_status_params
-    std::set<std::string> control_params;  // device_control_params
-    void load(const std::string &filename);
+    std::set<std::string> control_params; // device_control_params
+
+    public:
+    void SendHTTP(const std::string &);
+    void Load(const std::string &);
+    void Start(void);
 };
 
-void device_params :: load (const std::string &filename) {
+void Driver :: Load (const std::string &filename) {
 
     // Create empty property tree object
     pt::ptree tree;
@@ -66,24 +72,13 @@ void device_params :: load (const std::string &filename) {
     }
 }
 
-int main (int argc, char * argv[]) {
+void Driver :: SendHTTP (const std::string& got) {
 
-    if (argc < 2) {
-        std::cout << "Usage ./driver <filepath>";
-        exit(0);
-    }
+}
 
-    // Parse the isode-radio.xml driver configuration file and store the device status and
-    // device control params.
-    try {
-        device_params dp;
-        dp.load(std::string(argv[1]));
-        std::cout << "\nSuccess\n";
-    } catch (std::exception &e) {
-        std::cout << "Error: " << e.what() << "\n";
-    }
+void Driver :: Start(void) {
 
-    cbor item;
+   cbor item;
 
     while(1) {
 
@@ -94,12 +89,34 @@ int main (int argc, char * argv[]) {
 
         std::cout << "\nPrinting data...." << std::endl;
         std::cout << cbor::debug (item) << std::endl;
-        //std::cout << "\nDecoded CBOR : ";
+
         std::ostringstream obj;
-        //item.write(std::cout);
+
         item.write(obj);
         std::string got = obj.str();
         std::cout << "\nDecoded CBOR : " << got << std::endl;
+
+        SendHTTP(got);
     }
+}
+
+int main (int argc, char * argv[]) {
+
+    if (argc < 2) {
+        std::cout << "Usage ./driver <filepath>";
+        exit(0);
+    }
+
+    // Parse the isode-radio.xml device configuration file and store
+    // the device status and device control params.
+    Driver driver;
+    try {
+        driver.Load(std::string(argv[1]));
+        std::cout << "\nSuccess\n";
+    } catch (std::exception &e) {
+        std::cout << "Error: " << e.what() << "\n";
+    }
+
+    driver.Start();
     return 0;
 }

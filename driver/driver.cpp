@@ -23,7 +23,7 @@ class Driver {
     std::set<std::string> control_params; // device_control_params
 
     public:
-    void SendHTTP(const std::string &);
+    void SendHTTPRequest(const std::string &);
     void Load(const std::string &);
     void Start(void);
 };
@@ -72,8 +72,18 @@ void Driver :: Load (const std::string &filename) {
     }
 }
 
-void Driver :: SendHTTP (const std::string& got) {
+void Driver :: SendHTTPRequest (const std::string& got) {
 
+    std::regex param_regex("<Param>(.*)</Param>");
+    std::smatch param_match;
+
+    if(std::regex_search(got, param_match, param_regex)) {
+        if(status_params.find(param_match[1]) != status_params.end()) {
+            std :: cout << "Device status param [" << param_match[1] << "] received. Will issue HTTP GET\n";
+        } else if(control_params.find(param_match[1]) != control_params.end()) {
+            std :: cout << "Device contrl param [" << param_match[1] << "] received. Will issue HTTP POST\n";
+        }
+    }
 }
 
 void Driver :: Start(void) {
@@ -96,7 +106,7 @@ void Driver :: Start(void) {
         std::string got = obj.str();
         std::cout << "\nDecoded CBOR : " << got << std::endl;
 
-        SendHTTP(got);
+        SendHTTPRequest(got);
     }
 }
 

@@ -88,8 +88,8 @@ Device parameters updated !
 
 Read CBOR and printing it.
 ```
-$ g++ driver.cpp cbor11.cpp -o driver
-$ build/sampledrivers/dummygodev "Radio1" "schema/isode-radio.xml" "schema/stdparams.xml" | driver /workspace/red_black/rb_device/driver/isode-radio.xml
+$ g++ driver.cpp cbor11.cpp -o driver -lpthread
+$ build/sampledrivers/dummygodev "Radio1" "schema/isode-radio.xml" "schema/stdparams.xml" | driver /workspace/red_black/rb_device/driver/isode-radio.xml localhost 8080
 ```
 
 Sample output

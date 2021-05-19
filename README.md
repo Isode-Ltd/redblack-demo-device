@@ -89,7 +89,7 @@ Device parameters updated !
 Read CBOR and printing it.
 ```
 $ g++ driver.cpp cbor11.cpp -o driver
-$ build/sampledrivers/dummygodev "Radio1" "schema/isode-radio.xml" "schema/stdparams.xml" | driver
+$ build/sampledrivers/dummygodev "Radio1" "schema/isode-radio.xml" "schema/stdparams.xml" | driver /workspace/red_black/rb_device/driver/isode-radio.xml
 ```
 
 Sample output
@@ -98,7 +98,9 @@ Waiting to receive data....
 
 Printing data....
 24(h'78823c5374617475733e3c4465766963653e526164696f313c2f4465766963653e3c446576696365547970653e49736f6465526164696f3c2f446576696365547970653e3c506172616d3e4865617274626561743c2f506172616d3e3c4461746554696d653e313632313238333537323c2f4461746554696d653e3c2f5374617475733e')
-Decoded CBOR : �X�x�<Status><Device>Radio1</Device><DeviceType>IsodeRadio</DeviceType><Param>Heartbeat</Param><DateTime>1621283572</DateTime></Status>Waiting to receive data....
+Decoded CBOR : �X�x�<Status><Device>Radio1</Device><DeviceType>IsodeRadio</DeviceType><Param>Heartbeat</Param><DateTime>1621283572</DateTime></Status>
+
+Waiting to receive data....
 
 Printing data....
 24(h'78893c5374617475733e3c4465766963653e526164696f313c2f4465766963653e3c446576696365547970653e49736f6465526164696f3c2f446576696365547970653e3c506172616d3e506f776572537570706c79436f6e73756d7074696f6e3c2f506172616d3e3c496e74656765723e37313338393c2f496e74656765723e3c2f5374617475733e0a')

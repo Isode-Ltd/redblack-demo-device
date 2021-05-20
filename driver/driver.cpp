@@ -6,6 +6,10 @@
 #include <boost/beast/version.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/lexical_cast.hpp>
+
 #include <string>
 #include <vector>
 #include <set>
@@ -23,6 +27,9 @@ namespace beast = boost::beast;     // from <boost/beast.hpp>
 namespace http = beast::http;       // from <boost/beast/http.hpp>
 namespace net = boost::asio;        // from <boost/asio.hpp>
 using tcp = net::ip::tcp;           // from <boost/asio/ip/tcp.hpp>
+using boost::property_tree::ptree;
+using boost::property_tree::read_json;
+using boost::property_tree::write_json;
 
 class Driver {
 
@@ -37,19 +44,20 @@ class Driver {
     std::set<std::string> control_params; // device_control_params
 
     net::io_context ioc;                  // io_context is required for all I/O
+    int version;
 
     public:
-    //Driver(){}
+
     Driver(std::string host, std::string port, std::string name):device_host(host),
-    device_port(port),device_name(name)
-    {}
+    device_port(port),device_name(name) {
+        version = 11;
+    }
     void SendHTTPRequest(const std::string &);
     std :: string HTTPGet(const std::string &);
-    void HTTPPost(const std::string &);
+    std :: string HTTPPost(const std::string &);
     void Load(const std::string &);
     void Start(void);
 };
-
 
 void Driver :: Load (const std::string &filename) {
 
@@ -97,8 +105,8 @@ void Driver :: Load (const std::string &filename) {
 
 std :: string Driver :: HTTPGet (const std::string& target) {
 
-    std :: cout << "HTTP Get request to [ Device Host : " << device_host << ", Device Port : " \
-        << device_port << ", Device Target " << target << "]\n";
+    std :: cout << "HTTP Get request to => Device Host : [" << device_host << "], Device Port : [" \
+        << device_port << "], Device Target [" << target << "]\n";
 
     try {
         // These objects perform our I/O
@@ -112,7 +120,6 @@ std :: string Driver :: HTTPGet (const std::string& target) {
         stream.connect(results);
 
         // Set up an HTTP GET request message
-        int version = 11;
         http::request<http::string_body> req{http::verb::get, target, version};
         req.set(http::field::host, device_host);
         req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
@@ -153,8 +160,74 @@ std :: string Driver :: HTTPGet (const std::string& target) {
     return "ERROR";
 }
 
-void Driver :: HTTPPost (const std::string& target) {
+std :: string Driver :: HTTPPost (const std::string& target) {
 
+    std :: cout << "HTTP Post request to => Device Host : [" << device_host << "], Device Port : [" \
+        << device_port << "], Device Target [" << target << "]\n";
+
+    try {
+
+        // These objects perform our I/O
+        tcp::resolver resolver(ioc);
+        beast::tcp_stream stream(ioc);
+
+        // Look up the domain name
+        auto const results = resolver.resolve(device_host, device_port);
+
+        // Make the connection on the IP address we get from a lookup
+        stream.connect(results);
+
+        // Set up an HTTP POST request message
+        ptree root;
+        root.put ("frequency", "100");
+        root.put ("modem", "Audio");
+        std::ostringstream buf;
+        write_json (buf, root, false);
+        std::string json = buf.str();
+
+        std::cout << "JSON Message : " << json;
+
+        http::request<http::string_body> req{http::verb::post, target, version};
+        req.set(http::field::host, device_host);
+        req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+        req.set(http::field::content_type, "application/json");
+        req.set(http::field::content_length, boost::lexical_cast<std::string>(json.size()));
+        req.body() = json;
+        req.prepare_payload();
+
+        // Send the HTTP request to the remote host
+        http::write(stream, req);
+
+        // This buffer is used for reading and must be persisted
+        beast::flat_buffer buffer;
+
+        // Declare a container to hold the response
+        http::response<http::dynamic_body> res;
+
+        // Receive the HTTP response
+        http::read(stream, buffer, res);
+
+        // Write the message to standard out
+        std::cout << res << std::endl;
+
+        // Gracefully close the socket
+        beast::error_code ec;
+        stream.socket().shutdown(tcp::socket::shutdown_both, ec);
+
+        // not_connected happens sometimes
+        // so don't bother reporting it.
+        //
+        if(ec && ec != beast::errc::not_connected)
+            throw beast::system_error{ec};
+
+        // If we get here then the connection is closed gracefully
+    }
+    catch(std::exception const& e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return "ERROR";
+    }
+    return EXIT_SUCCESS;
 }
 
 void Driver :: SendHTTPRequest (const std::string& got) {

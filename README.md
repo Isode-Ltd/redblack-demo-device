@@ -94,29 +94,43 @@ $ build/sampledrivers/dummygodev "Radio1" "schema/isode-radio.xml" "schema/stdpa
 
 Sample output
 ```
-Waiting to receive data....
-
-Printing data....
-24(h'78823c5374617475733e3c4465766963653e526164696f313c2f4465766963653e3c446576696365547970653e49736f6465526164696f3c2f446576696365547970653e3c506172616d3e4865617274626561743c2f506172616d3e3c4461746554696d653e313632313238333537323c2f4461746554696d653e3c2f5374617475733e')
-Decoded CBOR : �X�x�<Status><Device>Radio1</Device><DeviceType>IsodeRadio</DeviceType><Param>Heartbeat</Param><DateTime>1621283572</DateTime></Status>
 
 Waiting to receive data....
 
 Printing data....
-24(h'78893c5374617475733e3c4465766963653e526164696f313c2f4465766963653e3c446576696365547970653e49736f6465526164696f3c2f446576696365547970653e3c506172616d3e506f776572537570706c79436f6e73756d7074696f6e3c2f506172616d3e3c496e74656765723e37313338393c2f496e74656765723e3c2f5374617475733e0a')
-Decoded CBOR : �X�x�<Status><Device>Radio1</Device><DeviceType>IsodeRadio</DeviceType><Param>PowerSupplyConsumption</Param><Integer>71389</Integer></Status>
+24(h'78893c5374617475733e3c4465766963653e526164696f313c2f4465766963653e3c446576696365547970653e49736f6465526164696f3c2f446576696365547970653e3c506172616d3e506f776572537570706c79436f6e73756d7074696f6e3c2f506172616d3e3c496e74656765723e37323436313c2f496e74656765723e3c2f5374617475733e0a')
+
+Decoded CBOR : �X�x�<Status><Device>Radio1</Device><DeviceType>IsodeRadio</DeviceType><Param>PowerSupplyConsumption</Param><Integer>72461</Integer></Status>
+
+Device status param [PowerSupplyConsumption] received. Will issue HTTP GET
+HTTP Get request to [ Device Host : localhost, Device Port : 8080, Device Target /device/radio/param/powersupplyconsumption]
+HTTP/1.1 200 OK
+Date: Thu, 20 May 2021 11:24:06 GMT
+Content-Length: 5
+Content-Type: text/plain; charset=utf-8
+
+"31"
+
+Response to HTTP Get ["31"]
+================= Success ==================
 
 Waiting to receive data....
 
 Printing data....
-24(h'78893c5374617475733e3c4465766963653e526164696f313c2f4465766963653e3c446576696365547970653e49736f6465526164696f3c2f446576696365547970653e3c506172616d3e4d6f6e69746f72696e6753696e63653c2f506172616d3e3c4461746554696d653e313632313238333534323c2f4461746554696d653e3c2f5374617475733e0a')
-Decoded CBOR : �X�x�<Status><Device>Radio1</Device><DeviceType>IsodeRadio</DeviceType><Param>MonitoringSince</Param><DateTime>1621283542</DateTime></Status>
+24(h'787c3c5374617475733e3c4465766963653e526164696f313c2f4465766963653e3c446576696365547970653e49736f6465526164696f3c2f446576696365547970653e3c506172616d3e54656d70657261747572653c2f506172616d3e3c496e74656765723e3133303c2f496e74656765723e3c2f5374617475733e0a')
 
-Waiting to receive data....
+Decoded CBOR : �X~x|<Status><Device>Radio1</Device><DeviceType>IsodeRadio</DeviceType><Param>Temperature</Param><Integer>130</Integer></Status>
 
-Printing data....
-24(h'78973c5374617475733e3c4465766963653e526164696f313c2f4465766963653e3c446576696365547970653e49736f6465526164696f3c2f446576696365547970653e3c506172616d3e56657273696f6e3c2f506172616d3e3c537472696e673e536f6d6520737472696e672076616c75652072656c6174656420746f2056657273696f6e3c2f537472696e673e3c2f5374617475733e0a')
-Decoded CBOR : �X�x�<Status><Device>Radio1</Device><DeviceType>IsodeRadio</DeviceType><Param>Version</Param><String>Some string value related to Version</String></Status>
+Device status param [Temperature] received. Will issue HTTP GET
+HTTP Get request to [ Device Host : localhost, Device Port : 8080, Device Target /device/radio/param/temperature]
+HTTP/1.1 200 OK
+Date: Thu, 20 May 2021 11:24:06 GMT
+Content-Length: 5
+Content-Type: text/plain; charset=utf-8
 
-Waiting to receive data....
+"44"
+
+Response to HTTP Get ["44"]
+================= Success ==================
+
 ```

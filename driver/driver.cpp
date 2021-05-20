@@ -14,6 +14,8 @@
 #include <fstream>
 #include <string>
 #include <regex>
+#include <algorithm>
+#include <cctype>
 #include "cbor11.h"
 
 namespace pt = boost::property_tree;
@@ -28,8 +30,9 @@ class Driver {
     /* Store the device information */
     std::string device_host;              // device host
     std::string device_port;              // device port
-    std::string m_device_type;            // device type
-    std::string m_device_family;          // device family
+    std::string device_name;              // device name
+    std::string device_type;              // device type
+    std::string device_family;            // device family
     std::set<std::string> status_params;  // device_status_params
     std::set<std::string> control_params; // device_control_params
 
@@ -37,10 +40,11 @@ class Driver {
 
     public:
     //Driver(){}
-    Driver(std::string host, std::string port):device_host(host),device_port(port)
+    Driver(std::string host, std::string port, std::string name):device_host(host),
+    device_port(port),device_name(name)
     {}
     void SendHTTPRequest(const std::string &);
-    void HTTPGet(const std::string &);
+    std :: string HTTPGet(const std::string &);
     void HTTPPost(const std::string &);
     void Load(const std::string &);
     void Start(void);
@@ -55,11 +59,11 @@ void Driver :: Load (const std::string &filename) {
     // Parse the XML into the property tree.
     pt::read_xml(filename, tree);
 
-    m_device_type = tree.get<std::string>("AbstractDeviceSpecification.DeviceType");
-    m_device_family = tree.get<std::string>("AbstractDeviceSpecification.DeviceFamily");
+    device_type = tree.get<std::string>("AbstractDeviceSpecification.DeviceType");
+    device_family = tree.get<std::string>("AbstractDeviceSpecification.DeviceFamily");
 
-    std::cout << "Device Type..." << m_device_type << std::endl;
-    std::cout << "Device Family..." << m_device_family << std::endl;
+    std::cout << "Device Type..." << device_type << std::endl;
+    std::cout << "Device Family..." << device_family << std::endl;
 
     // Get list of device status params from the device xml file.
     std::cout << "\nDevice Status Parameters..." << std::endl;
@@ -91,12 +95,12 @@ void Driver :: Load (const std::string &filename) {
     }
 }
 
-void Driver :: HTTPGet (const std::string& target) {
+std :: string Driver :: HTTPGet (const std::string& target) {
+
+    std :: cout << "HTTP Get request to [ Device Host : " << device_host << ", Device Port : " \
+        << device_port << ", Device Target " << target << "]\n";
 
     try {
-        // The io_context is required for all I/O
-        net::io_context ioc;
-
         // These objects perform our I/O
         tcp::resolver resolver(ioc);
         beast::tcp_stream stream(ioc);
@@ -120,7 +124,7 @@ void Driver :: HTTPGet (const std::string& target) {
         beast::flat_buffer buffer;
 
         // Declare a container to hold the response
-        http::response<http::dynamic_body> res;
+        http::response<http::string_body> res;
 
         // Receive the HTTP response
         http::read(stream, buffer, res);
@@ -138,10 +142,15 @@ void Driver :: HTTPGet (const std::string& target) {
         if(ec && ec != beast::errc::not_connected)
             throw beast::system_error{ec};
 
+        std :: string response = res.body();
+        response.erase(std::remove(response.begin(), response.end(), '\n'), response.end());
+        std :: cout << "Response to HTTP Get [" << response << "]\n";
+        return response;
         // If we get here then the connection is closed gracefully
     } catch(std::exception const& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
+    return "ERROR";
 }
 
 void Driver :: HTTPPost (const std::string& target) {
@@ -156,7 +165,14 @@ void Driver :: SendHTTPRequest (const std::string& got) {
     if(std::regex_search(got, param_match, param_regex)) {
         if(status_params.find(param_match[1]) != status_params.end()) {
             std :: cout << "Device status param [" << param_match[1] << "] received. Will issue HTTP GET\n";
-
+            std :: string param(param_match[1]);
+            std :: transform(param.begin(), param.end(), param.begin(),
+                           [](unsigned char c){ return std::tolower(c); });
+            std :: string target("/device/" + device_name + "/param/" + param);
+            std :: string response = HTTPGet(target);
+            if (response != "ERROR") {
+                std :: cout << "================= Success ==================\n";
+            }
         } else if(control_params.find(param_match[1]) != control_params.end()) {
             std :: cout << "Device control param [" << param_match[1] << "] received. Will issue HTTP POST\n";
         }
@@ -190,7 +206,7 @@ void Driver :: Start(void) {
 int main (int argc, char * argv[]) {
 
     if (argc < 4) {
-        std::cout << "Usage ./driver <filepath_device> <device_host> <device_port>";
+        std::cout << "Usage ./driver <device_schema> <device_host> <device_port> <device_name_optional>";
         exit(0);
     }
 
@@ -198,8 +214,12 @@ int main (int argc, char * argv[]) {
     // the device status and device control params.
     std :: string host(argv[2]);
     std :: string port(argv[3]);
+    std :: string name("radio");
+    if (argc > 4) {
+        name = argv[4];
+    }
 
-    Driver driver(host, port);
+    Driver driver(host, port, name);
     try {
         driver.Load(std::string(argv[1]));
         std::cout << "\nSuccess\n";

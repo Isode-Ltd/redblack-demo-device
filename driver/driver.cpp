@@ -1,72 +1,29 @@
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
-#include <boost/beast/core.hpp>
-#include <boost/beast/http.hpp>
-#include <boost/beast/version.hpp>
-#include <boost/asio/connect.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/lexical_cast.hpp>
-
-#include <string>
-#include <vector>
-#include <set>
-#include <exception>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <regex>
-#include <algorithm>
-#include <cctype>
-#include "cbor11.h"
+#include "driver.h"
 
 namespace pt = boost::property_tree;
 namespace beast = boost::beast;     // from <boost/beast.hpp>
 namespace http = beast::http;       // from <boost/beast/http.hpp>
 namespace net = boost::asio;        // from <boost/asio.hpp>
-using tcp = net::ip::tcp;           // from <boost/asio/ip/tcp.hpp>
 
+using net::ip::tcp;                 // from <boost/asio/ip/tcp.hpp>
 using boost::property_tree::ptree;
-using boost::property_tree::read_json;
 using boost::property_tree::write_json;
 
-class Driver {
-
-    private:
-    /* Store the device information */
-    std::string device_host;              // device host
-    std::string device_port;              // device port
-    std::string device_name;              // device name
-    std::string device_type;              // device type
-    std::string device_family;            // device family
-    std::set<std::string> status_params;  // device_status_params
-    std::set<std::string> control_params; // device_control_params
-
-    net::io_context ioc;                  // io_context is required for all I/O
-    int version;
-
-    public:
-
-    Driver(std::string host, std::string port, std::string name):device_host(host),
-    device_port(port),device_name(name) {
+Driver :: Driver(std::string host, std::string port, std::string name)
+    :
+    device_host(host),
+    device_port(port),
+    device_name(name) {
         version = 11;
-    }
-    void SendHTTPRequest(const std::string &);
-    std :: string HTTPGet(const std::string &);
-    std :: string HTTPPost(const std::string &, const std::string &, const std::string &);
-    void Load(const std::string &);
-    void Start(void);
-};
+}
 
-void Driver :: Load (const std::string &filename) {
+void Driver :: Load (const std::string &file_device_schema) {
 
     // Create empty property tree object
     pt::ptree tree;
 
     // Parse the XML into the property tree.
-    pt::read_xml(filename, tree);
+    pt::read_xml(file_device_schema, tree);
 
     device_type = tree.get<std::string>("AbstractDeviceSpecification.DeviceType");
     device_family = tree.get<std::string>("AbstractDeviceSpecification.DeviceFamily");
@@ -229,12 +186,15 @@ std :: string Driver :: HTTPPost (const std::string& target, const std::string& 
     return "SUCCESS";
 }
 
-void Driver :: SendHTTPRequest (const std::string& got) {
+void Driver :: SendHTTPRequest (const std::string& rb_msg) {
 
-    std :: regex param_regex("<.*<Param>(.*)</Param>(.*)</Control>");
+    //std :: regex param_regex("<.*<Param>(.*)</Param>(.*)</Control>");
+    // Below is for testing as we receive the CBOR <Status> msg. When it come from rb server,
+    // we get CBOR <Control> messages
+    std :: regex param_regex("<.*<Param>(.*)</Param>(.*)</Status>");
     std :: smatch param_match;
 
-    if (std::regex_search(got, param_match, param_regex)) {
+    if (std::regex_search(rb_msg, param_match, param_regex)) {
         if (status_params.find(param_match[1]) != status_params.end()) {
             std :: cout << "Device status param [" << param_match[1] << "] received. Will issue HTTP GET\n";
             std :: string param(param_match[1]);
@@ -267,7 +227,8 @@ void Driver :: SendHTTPRequest (const std::string& got) {
             std :: string target("/device/" + device_name + "/control");
             std :: string response = HTTPPost(target, param, value);
             if (response == "SUCCESS") {
-                msg = std::regex_replace(msg, std::regex("Control"), "Status");
+                //msg = std::regex_replace(msg, std::regex("Control"), "Status");
+                msg = std::regex_replace(msg, std::regex("Status"), "Control");
                 cbor status_msg(msg);
                 std :: cout << "\n=============================================================" << std::endl;
                 status_msg.write(std::cout);

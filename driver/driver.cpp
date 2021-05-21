@@ -27,6 +27,7 @@ namespace beast = boost::beast;     // from <boost/beast.hpp>
 namespace http = beast::http;       // from <boost/beast/http.hpp>
 namespace net = boost::asio;        // from <boost/asio.hpp>
 using tcp = net::ip::tcp;           // from <boost/asio/ip/tcp.hpp>
+
 using boost::property_tree::ptree;
 using boost::property_tree::read_json;
 using boost::property_tree::write_json;
@@ -54,7 +55,7 @@ class Driver {
     }
     void SendHTTPRequest(const std::string &);
     std :: string HTTPGet(const std::string &);
-    std :: string HTTPPost(const std::string &);
+    std :: string HTTPPost(const std::string &, const std::string &, const std::string &);
     void Load(const std::string &);
     void Start(void);
 };
@@ -156,11 +157,12 @@ std :: string Driver :: HTTPGet (const std::string& target) {
         // If we get here then the connection is closed gracefully
     } catch(std::exception const& e) {
         std::cerr << "Error: " << e.what() << std::endl;
+        return "ERROR";
     }
-    return "ERROR";
+    return "SUCCESS";
 }
 
-std :: string Driver :: HTTPPost (const std::string& target) {
+std :: string Driver :: HTTPPost (const std::string& target, const std::string& param, const std::string& value) {
 
     std :: cout << "HTTP Post request to => Device Host : [" << device_host << "], Device Port : [" \
         << device_port << "], Device Target [" << target << "]\n";
@@ -179,8 +181,7 @@ std :: string Driver :: HTTPPost (const std::string& target) {
 
         // Set up an HTTP POST request message
         ptree root;
-        root.put ("frequency", "100");
-        root.put ("modem", "Audio");
+        root.put (param, value);
         std::ostringstream buf;
         write_json (buf, root, false);
         std::string json = buf.str();
@@ -221,22 +222,20 @@ std :: string Driver :: HTTPPost (const std::string& target) {
             throw beast::system_error{ec};
 
         // If we get here then the connection is closed gracefully
-    }
-    catch(std::exception const& e)
-    {
+    } catch(std::exception const& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return "ERROR";
     }
-    return EXIT_SUCCESS;
+    return "SUCCESS";
 }
 
 void Driver :: SendHTTPRequest (const std::string& got) {
 
-    std::regex param_regex("<Param>(.*)</Param>");
-    std::smatch param_match;
+    std :: regex param_regex("<.*<Param>(.*)</Param>(.*)</Control>");
+    std :: smatch param_match;
 
-    if(std::regex_search(got, param_match, param_regex)) {
-        if(status_params.find(param_match[1]) != status_params.end()) {
+    if (std::regex_search(got, param_match, param_regex)) {
+        if (status_params.find(param_match[1]) != status_params.end()) {
             std :: cout << "Device status param [" << param_match[1] << "] received. Will issue HTTP GET\n";
             std :: string param(param_match[1]);
             std :: transform(param.begin(), param.end(), param.begin(),
@@ -246,8 +245,34 @@ void Driver :: SendHTTPRequest (const std::string& got) {
             if (response != "ERROR") {
                 std :: cout << "================= Success ==================\n";
             }
-        } else if(control_params.find(param_match[1]) != control_params.end()) {
-            std :: cout << "Device control param [" << param_match[1] << "] received. Will issue HTTP POST\n";
+        } else if (control_params.find(param_match[1]) != control_params.end()) {
+            std :: cout << "Device control command [" << param_match[0] << "]\n";
+            std :: cout << "Device control param [" << param_match[1] << "], Value [" << param_match[2] \
+                << "] received. Will issue HTTP POST\n";
+
+            std :: string msg(param_match[0]);
+            std :: string param(param_match[1]);
+
+            std :: string encaps_value(param_match[2]);
+            std :: regex value_regex("<.+>(.*)</.+>");
+            std :: smatch value_match;
+
+            std :: string value("");
+            if (std::regex_search(encaps_value, value_match, value_regex)) {
+                value = value_match[1];
+            }
+            //std :: string value(param_match[2]);
+            std :: transform(param.begin(), param.end(), param.begin(),
+                           [](unsigned char c){ return std::tolower(c); });
+            std :: string target("/device/" + device_name + "/control");
+            std :: string response = HTTPPost(target, param, value);
+            if (response == "SUCCESS") {
+                msg = std::regex_replace(msg, std::regex("Control"), "Status");
+                cbor status_msg(msg);
+                std :: cout << "\n=============================================================" << std::endl;
+                status_msg.write(std::cout);
+                std :: cout << "\n=============================================================" << std::endl;
+            }
         }
     }
 }

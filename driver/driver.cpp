@@ -228,25 +228,22 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
     src::severity_logger<severity_level> lg;
 
     BOOST_LOG_SEV(lg, info) << "Message from RB Server : [" << rb_msg << "]";
-    //std :: regex param_regex("<.*<Param>(.*)</Param>(.*)</Control>");
-    // Below is for testing as we receive the CBOR <Status> msg. When it come from rb server,
-    // we get CBOR <Control> messages
+    /*  Below is the example of a control message from RB server
+        <Control>
+            <Device>Radio</Device>
+            <DeviceType>IsodeRadio</DeviceType>
+            <Param>Frequency</Param>
+            <Integer>22917</Integer>
+        </Control>
+    */
+
+    // Replace Status with Control
     std :: regex param_regex("<.*<Param>(.*)</Param>(.*)</Status>");
     std :: smatch param_match;
 
     if (std::regex_search(rb_msg, param_match, param_regex)) {
 
-        if (status_params.find(param_match[1]) != status_params.end()) {
-            std :: cout << "Device status param [" << param_match[1] << "] received. Will issue HTTP GET\n";
-            std :: string param(param_match[1]);
-            std :: transform(param.begin(), param.end(), param.begin(),
-                           [](unsigned char c){ return std::tolower(c); });
-            std :: string target("/device/" + device_name + "/param/" + param);
-            std :: string response = HTTPGet(target);
-            if (response != "ERROR") {
-                std :: cout << "================= Success ==================\n";
-            }
-        } else if (control_params.find(param_match[1]) != control_params.end()) {
+        if (control_params.find(param_match[1]) != control_params.end()) {
 
             std :: string msg(param_match[0]);
             std :: string param(param_match[1]);
@@ -273,6 +270,16 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
                 cbor status_msg(msg);
                 BOOST_LOG_SEV(lg, info) << "Sending status messages : [" << msg << "]";
                 status_msg.write(std::cout);
+            }
+        } else if (status_params.find(param_match[1]) != status_params.end()) {
+            std :: cout << "Device status param [" << param_match[1] << "] received. Will issue HTTP GET\n";
+            std :: string param(param_match[1]);
+            std :: transform(param.begin(), param.end(), param.begin(),
+                           [](unsigned char c){ return std::tolower(c); });
+            std :: string target("/device/" + device_name + "/param/" + param);
+            std :: string response = HTTPGet(target);
+            if (response != "ERROR") {
+                std :: cout << "================= Success ==================\n";
             }
         }
     }

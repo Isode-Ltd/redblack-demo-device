@@ -47,7 +47,7 @@ void Driver :: InitLogging (void) {
 void Driver :: Load (const std::string &file_device_schema) {
 
     using namespace logging::trivial;
-    src::severity_logger< severity_level > lg;
+    src::severity_logger<severity_level> lg;
 
     // Create empty property tree object
     pt::ptree tree;
@@ -154,9 +154,8 @@ std :: string Driver :: HTTPGet (const std::string& target) {
 std :: string Driver :: HTTPPost (const std::string& target,
                                   const std::string& param,
                                   const std::string& value) {
-
     using namespace logging::trivial;
-    src::severity_logger< severity_level > lg;
+    src::severity_logger<severity_level> lg;
 
     BOOST_LOG_SEV(lg, info) << "Sending HTTP Post request to device host : [" << \
         device_host << "], device port : [" << device_port << "], Device Target [" << target << "]\n";
@@ -217,7 +216,7 @@ std :: string Driver :: HTTPPost (const std::string& target,
 
         // If we get here then the connection is closed gracefully
     } catch(std::exception const& e) {
-        BOOST_LOG_SEV(lg, info) << "Error: " << e.what() << std::endl;
+        BOOST_LOG_SEV(lg, info) << "Error: " << e.what();
         return "ERROR";
     }
     return "SUCCESS";
@@ -225,6 +224,10 @@ std :: string Driver :: HTTPPost (const std::string& target,
 
 void Driver :: SendHTTPRequest (const std::string& rb_msg) {
 
+    using namespace logging::trivial;
+    src::severity_logger<severity_level> lg;
+
+    BOOST_LOG_SEV(lg, info) << "Message from RB Server : [" << rb_msg << "]";
     //std :: regex param_regex("<.*<Param>(.*)</Param>(.*)</Control>");
     // Below is for testing as we receive the CBOR <Status> msg. When it come from rb server,
     // we get CBOR <Control> messages
@@ -232,6 +235,7 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
     std :: smatch param_match;
 
     if (std::regex_search(rb_msg, param_match, param_regex)) {
+
         if (status_params.find(param_match[1]) != status_params.end()) {
             std :: cout << "Device status param [" << param_match[1] << "] received. Will issue HTTP GET\n";
             std :: string param(param_match[1]);
@@ -243,9 +247,6 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
                 std :: cout << "================= Success ==================\n";
             }
         } else if (control_params.find(param_match[1]) != control_params.end()) {
-            std :: cout << "Device control command [" << param_match[0] << "]\n";
-            std :: cout << "Device control param [" << param_match[1] << "], Value [" << param_match[2] \
-                << "] received. Will issue HTTP POST\n";
 
             std :: string msg(param_match[0]);
             std :: string param(param_match[1]);
@@ -258,18 +259,20 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
             if (std::regex_search(encaps_value, value_match, value_regex)) {
                 value = value_match[1];
             }
-            //std :: string value(param_match[2]);
+
             std :: transform(param.begin(), param.end(), param.begin(),
                            [](unsigned char c){ return std::tolower(c); });
+
             std :: string target("/device/" + device_name + "/control");
+
+            // Send HTTP Post Request
             std :: string response = HTTPPost(target, param, value);
+
             if (response == "SUCCESS") {
-                //msg = std::regex_replace(msg, std::regex("Control"), "Status");
                 msg = std::regex_replace(msg, std::regex("Status"), "Control");
                 cbor status_msg(msg);
-                std :: cout << "\n=============================================================" << std::endl;
+                BOOST_LOG_SEV(lg, info) << "Sending status messages : [" << msg << "]";
                 status_msg.write(std::cout);
-                std :: cout << "\n=============================================================" << std::endl;
             }
         }
     }
@@ -277,25 +280,23 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
 
 void Driver :: Start(void) {
 
-   cbor item;
+    cbor item;
+    using namespace logging::trivial;
+    src::severity_logger<severity_level> lg;
 
     while(1) {
 
-        std::cout << "\nWaiting to receive data...." << std::endl;
+        BOOST_LOG_SEV(lg, info) << "Waiting to receive data...";
 
         item.read (std::cin);
         std::string received_str = cbor :: debug (item);
 
-        std::cout << "\nPrinting data...." << std::endl;
-        std::cout << cbor::debug (item) << std::endl;
-
         std::ostringstream obj;
 
         item.write(obj);
-        std::string got = obj.str();
-        std::cout << "\nDecoded CBOR : " << got << std::endl;
+        std::string rb_msg = obj.str();
 
-        SendHTTPRequest(got);
+        SendHTTPRequest(rb_msg);
     }
 }
 

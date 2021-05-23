@@ -7,19 +7,32 @@
 #include <regex>
 #include <algorithm>
 #include <cctype>
-#include "cbor11.h"
 
+// Device schema parsing
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
+
+// Sending HTTP Get / Post to devices
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
+
+// Constructing JSON object
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/lexical_cast.hpp>
+
+// Driver logging
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/sinks/text_file_backend.hpp>
+
+#include "cbor11.h"
 
 class Driver {
 
@@ -40,10 +53,16 @@ class Driver {
 
     Driver(std::string device_host, std::string device_port, std::string device_name);
 
+    ~Driver();
+
     // Parse the XML device schema and store the device status & control params.
     void Load(const std::string& file_device_schema);
+
     // Run the driver program.
     void Start(void);
+
+    // Run the driver program.
+    void InitLogging(void);
 
     // Send an HTTP Request ( Get / Post ) to the rb devices based on message received from 
     // the red-black server.

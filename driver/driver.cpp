@@ -1,23 +1,53 @@
 #include "driver.h"
 
 namespace pt = boost::property_tree;
-namespace beast = boost::beast;     // from <boost/beast.hpp>
-namespace http = beast::http;       // from <boost/beast/http.hpp>
-namespace net = boost::asio;        // from <boost/asio.hpp>
+namespace beast = boost::beast;
+namespace http = beast::http;
+namespace net = boost::asio;
+namespace logging = boost::log;
+namespace keywords = boost::log::keywords;
+namespace sinks = boost::log::sinks;
+namespace src = boost::log::sources;
 
-using net::ip::tcp;                 // from <boost/asio/ip/tcp.hpp>
+using net::ip::tcp;
 using boost::property_tree::ptree;
 using boost::property_tree::write_json;
 
-Driver :: Driver(std::string host, std::string port, std::string name)
+Driver :: Driver(std::string dev_host, std::string dev_port, std::string dev_name)
     :
-    device_host(host),
-    device_port(port),
-    device_name(name) {
+    device_host(dev_host),
+    device_port(dev_port),
+    device_name(dev_name) {
         version = 11;
 }
 
+Driver :: ~Driver() {
+
+}
+
+void Driver :: InitLogging (void) {
+
+    logging::add_file_log
+    (
+        keywords::file_name = "/tmp/" + device_name + "_%N.log",                      /*< file name pattern >*/
+        keywords::rotation_size = 10 * 1024 * 1024,                                   /*< rotate files every 10 MiB... >*/
+        keywords::time_based_rotation = sinks::file::rotation_at_time_point(0, 0, 0), /*< ...or at midnight >*/
+        keywords::format = "[%TimeStamp%]: %Message%",                                /*< log record format >*/
+        keywords::auto_flush = true
+    );
+
+    logging::core::get()->set_filter
+    (
+        logging::trivial::severity >= logging::trivial::info
+    );
+
+    logging::add_common_attributes();
+}
+
 void Driver :: Load (const std::string &file_device_schema) {
+
+    using namespace logging::trivial;
+    src::severity_logger< severity_level > lg;
 
     // Create empty property tree object
     pt::ptree tree;
@@ -28,11 +58,12 @@ void Driver :: Load (const std::string &file_device_schema) {
     device_type = tree.get<std::string>("AbstractDeviceSpecification.DeviceType");
     device_family = tree.get<std::string>("AbstractDeviceSpecification.DeviceFamily");
 
-    std::cout << "Device Type..." << device_type << std::endl;
-    std::cout << "Device Family..." << device_family << std::endl;
+    BOOST_LOG_SEV(lg, info) << "Device Type : [" << device_type << "] Device Family : [" \
+        << device_family << "]";
 
-    // Get list of device status params from the device xml file.
-    std::cout << "\nDevice Status Parameters..." << std::endl;
+    BOOST_LOG_SEV(lg, info) << "Fetching device status parameters";
+
+    // Get list of device status params from the xml schema file.
     BOOST_FOREACH(pt::ptree::value_type &v,
         tree.get_child("AbstractDeviceSpecification.DeviceStatusParameters")) {
 
@@ -40,21 +71,22 @@ void Driver :: Load (const std::string &file_device_schema) {
 
             std::string param = p.first.data();
             if (param == "ParameterName") {
-                std::cout << p.second.data() << std::endl;
+                BOOST_LOG_SEV(lg, info) << "[" << p.second.data() << "]";
                 status_params.insert(p.second.data());
             }
         }
     }
 
-    // Get list of device status params from the device xml file.
-    std::cout << "\nDevice Control Parameters..." << std::endl;
+    BOOST_LOG_SEV(lg, info) << "Fetching device control parameters";
+
+    // Get list of device status params from the xml schema file.
     BOOST_FOREACH(pt::ptree::value_type &v,
         tree.get_child("AbstractDeviceSpecification.DeviceControlParameters")) {
 
         BOOST_FOREACH(pt::ptree::value_type &p, v.second) {
             std::string param = p.first.data();
             if (param == "ParameterName") {
-                std::cout << p.second.data() << std::endl;
+                BOOST_LOG_SEV(lg, info) << "[" << p.second.data() << "]";
                 control_params.insert(p.second.data());
             }
         }
@@ -119,10 +151,15 @@ std :: string Driver :: HTTPGet (const std::string& target) {
     return "SUCCESS";
 }
 
-std :: string Driver :: HTTPPost (const std::string& target, const std::string& param, const std::string& value) {
+std :: string Driver :: HTTPPost (const std::string& target,
+                                  const std::string& param,
+                                  const std::string& value) {
 
-    std :: cout << "HTTP Post request to => Device Host : [" << device_host << "], Device Port : [" \
-        << device_port << "], Device Target [" << target << "]\n";
+    using namespace logging::trivial;
+    src::severity_logger< severity_level > lg;
+
+    BOOST_LOG_SEV(lg, info) << "Sending HTTP Post request to device host : [" << \
+        device_host << "], device port : [" << device_port << "], Device Target [" << target << "]\n";
 
     try {
 
@@ -143,7 +180,7 @@ std :: string Driver :: HTTPPost (const std::string& target, const std::string& 
         write_json (buf, root, false);
         std::string json = buf.str();
 
-        std::cout << "JSON Message : " << json;
+        BOOST_LOG_SEV(lg, info) << "Composed JSON message : " << json;
 
         http::request<http::string_body> req{http::verb::post, target, version};
         req.set(http::field::host, device_host);
@@ -180,7 +217,7 @@ std :: string Driver :: HTTPPost (const std::string& target, const std::string& 
 
         // If we get here then the connection is closed gracefully
     } catch(std::exception const& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        BOOST_LOG_SEV(lg, info) << "Error: " << e.what() << std::endl;
         return "ERROR";
     }
     return "SUCCESS";
@@ -279,13 +316,13 @@ int main (int argc, char * argv[]) {
     }
 
     Driver driver(host, port, name);
+    driver.InitLogging();
+
     try {
         driver.Load(std::string(argv[1]));
-        std::cout << "\nSuccess\n";
     } catch (std::exception &e) {
         std::cout << "Error: " << e.what() << "\n";
     }
-
     driver.Start();
     return 0;
 }

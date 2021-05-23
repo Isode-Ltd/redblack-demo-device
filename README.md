@@ -88,8 +88,9 @@ Device parameters updated !
 
 Read CBOR and printing it.
 ```
-$ g++ driver.cpp cbor11.cpp -o driver -lpthread
-/workspace/source_red_black/redblack$ build/sampledrivers/dummygodev "Radio1" "schema/isode-radio.xml" "schema/stdparams.xml" | /workspace/red_black/rb_device/driver/driver /workspace/red_black/rb_device/driver/isode-radio.xml localhost 8080
+$ g++ -DBOOST_LOG_DYN_LINK driver.cpp cbor11.cpp -lboost_log_setup -lboost_log -lboost_thread -lpthread -lboost_system -o driver
+
+kshi@ubox:/workspace/source_red_black/redblack$ build/sampledrivers/dummygodev "Radio" "schema/isode-radio.xml" "schema/stdparams.xml" | /workspace/red_black/rb_device/driver/driver /workspace/red_black/rb_device/driver/isode-radio.xml localhost 8080
 ```
 
 Sample output

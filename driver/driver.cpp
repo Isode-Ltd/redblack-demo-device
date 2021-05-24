@@ -12,6 +12,7 @@ namespace src = boost::log::sources;
 using net::ip::tcp;
 using boost::property_tree::ptree;
 using boost::property_tree::write_json;
+using boost::property_tree::read_json;
 
 Driver :: Driver(std::string dev_host, std::string dev_port, std::string dev_name)
     :
@@ -19,6 +20,10 @@ Driver :: Driver(std::string dev_host, std::string dev_port, std::string dev_nam
     device_port(dev_port),
     device_name(dev_name) {
         version = 11;
+        std::string param_types [] = {"Integer", "String", "Boolean", "DateTime", "Enumerated"};
+        ptype.insert(param_types, param_types + sizeof(param_types)/sizeof(param_ptype[0]));
+
+        status_msg_format = "<Status><Device>" + dev_name + "</Device><DeviceType>_devicetype_</DeviceType><Param>_paramname_</Param><_paramtype_>_paramvalue_</_paramtype_></Status>";
 }
 
 Driver :: ~Driver() {
@@ -44,6 +49,7 @@ void Driver :: InitLogging (void) {
     logging::add_common_attributes();
 }
 
+// Parse the device schema XML and extract the Device Status & Device Control Params
 void Driver :: Load (const std::string &file_device_schema) {
 
     using namespace logging::trivial;
@@ -58,6 +64,8 @@ void Driver :: Load (const std::string &file_device_schema) {
     device_type = tree.get<std::string>("AbstractDeviceSpecification.DeviceType");
     device_family = tree.get<std::string>("AbstractDeviceSpecification.DeviceFamily");
 
+    status_msg_format = std::regex_replace(status_msg_format, std::regex("_devicetype_"), device_type);
+
     BOOST_LOG_SEV(lg, info) << "Device Type : [" << device_type << "] Device Family : [" \
         << device_family << "]";
 
@@ -67,12 +75,22 @@ void Driver :: Load (const std::string &file_device_schema) {
     BOOST_FOREACH(pt::ptree::value_type &v,
         tree.get_child("AbstractDeviceSpecification.DeviceStatusParameters")) {
 
+        bool found = false;
+        std::string tmp("");
         BOOST_FOREACH(pt::ptree::value_type &p, v.second) {
 
             std::string param = p.first.data();
+            // Store the param
             if (param == "ParameterName") {
-                BOOST_LOG_SEV(lg, info) << "[" << p.second.data() << "]";
                 status_params.insert(p.second.data());
+                found = true;
+                tmp = p.second.data();
+            }
+            // Store the param and param_type
+            if (found and ptype.find(param) != ptype.end()) {
+                param_ptype.insert(std::pair<std::string,std::string>(tmp, param));
+                BOOST_LOG_SEV(lg, info) << "Param [" << tmp << "], Type [" << param << "]";
+                found = false;
             }
         }
     }
@@ -95,8 +113,11 @@ void Driver :: Load (const std::string &file_device_schema) {
 
 std :: string Driver :: HTTPGet (const std::string& target) {
 
-    std :: cout << "HTTP Get request to => Device Host : [" << device_host << "], Device Port : [" \
-        << device_port << "], Device Target [" << target << "]\n";
+    using namespace logging::trivial;
+    src::severity_logger<severity_level> lg;
+
+    BOOST_LOG_SEV(lg, info) << "Sending HTTP Get request to device host : [" << \
+        device_host << "], device port : [" << device_port << "], Device Target [" << target << "]\n";
 
     try {
         // These objects perform our I/O
@@ -139,13 +160,40 @@ std :: string Driver :: HTTPGet (const std::string& target) {
         if(ec && ec != beast::errc::not_connected)
             throw beast::system_error{ec};
 
-        std :: string response = res.body();
-        response.erase(std::remove(response.begin(), response.end(), '\n'), response.end());
-        std :: cout << "Response to HTTP Get [" << response << "]\n";
-        return response;
+        std :: stringstream response;
+        response << res.body();
+
+        ptree pt;
+        read_json(response, pt);
+
+        /*
+        Status Message Format
+        <Status>\
+        <Device>_devicename_</Device>\
+        <DeviceType>_devicetype_</DeviceType>\
+        <Param>_paramname_</Param>\
+        <_paramtype_>_paramvalue_</_paramtype_>\
+        </Status>
+        */
+
+        // Example : ptree with one entry would have something like { "PowerSupplyConsumption" : "31" }
+        // param_ptye is a map like { "PowerSupplyConsumption" : "Integer" }
+        for (ptree::const_iterator it = pt.begin(); it != pt.end(); ++it) {
+            std::string msg = status_msg_format;
+            msg = std::regex_replace(msg, std::regex("_paramname_"), it->first);
+            msg = std::regex_replace(msg, std::regex("_paramtype_"), param_ptype[it->first]);
+            std::string value = it->second.get_value<std::string>();
+            msg = std::regex_replace(msg, std::regex("_paramvalue_"), value);
+
+            cbor status_msg(msg);
+            BOOST_LOG_SEV(lg, info) << "Sending status messages : [" << msg << "]";
+            //std::cout << "\n====================================================\n";
+            status_msg.write(std::cout);
+            //std::cout << "\n====================================================\n";
+        }
         // If we get here then the connection is closed gracefully
     } catch(std::exception const& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Error : " << e.what() << std::endl;
         return "ERROR";
     }
     return "SUCCESS";
@@ -215,7 +263,7 @@ std :: string Driver :: HTTPPost (const std::string& target,
             throw beast::system_error{ec};
 
         // If we get here then the connection is closed gracefully
-    } catch(std::exception const& e) {
+    } catch (std::exception const& e) {
         BOOST_LOG_SEV(lg, info) << "Error: " << e.what();
         return "ERROR";
     }
@@ -237,7 +285,7 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
         </Control>
     */
 
-    // Replace Status with Control
+    // Replace "Status" with "Control" case sensitive in the below block.
     std :: regex param_regex("<.*<Param>(.*)</Param>(.*)</Status>");
     std :: smatch param_match;
 
@@ -271,12 +319,12 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
                 BOOST_LOG_SEV(lg, info) << "Sending status messages : [" << msg << "]";
                 status_msg.write(std::cout);
             }
-        } else if (status_params.find(param_match[1]) != status_params.end()) {
-            std :: cout << "Device status param [" << param_match[1] << "] received. Will issue HTTP GET\n";
-            std :: string param(param_match[1]);
-            std :: transform(param.begin(), param.end(), param.begin(),
-                           [](unsigned char c){ return std::tolower(c); });
-            std :: string target("/device/" + device_name + "/param/" + param);
+        } else if ( param_match[1] == "SendParameters" ) {
+            //std :: cout << "Device status param [" << param_match[1] << "] received. Will issue HTTP GET\n";
+            //std :: string param(param_match[1]);
+            //std :: transform(param.begin(), param.end(), param.begin(),
+            //               [](unsigned char c){ return std::tolower(c); });
+            std :: string target("/device/" + device_name);
             std :: string response = HTTPGet(target);
             if (response != "ERROR") {
                 std :: cout << "================= Success ==================\n";
@@ -285,7 +333,7 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
     }
 }
 
-void Driver :: Start(void) {
+void Driver :: Start (void) {
 
     cbor item;
     using namespace logging::trivial;

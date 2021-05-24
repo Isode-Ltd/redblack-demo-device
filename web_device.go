@@ -18,16 +18,16 @@ type Device struct {
 	// Device Type
 	DeviceType string `json:"devicetype"`
 	// Status parameters
-	VSWR                   string `json:"vswr"`
-	PowerSupplyVoltage     string `json:"powersupplyvoltage"`
-	PowerSupplyConsumption string `json:"powersupplyconsumption"`
-	Temperature            string `json:"temperature"`
-	SignalLevel            string `json:"signallevel"`
+	VSWR                   string `json:"VSWR"`
+	PowerSupplyVoltage     string `json:"PowerSupplyVoltage"`
+	PowerSupplyConsumption string `json:"PowerSupplyConsumption"`
+	Temperature            string `json:"Temperature"`
+	SignalLevel            string `json:"SignalLevel"`
 	// Control parameters
-	Frequency         string `json:"frequency"`
-	TransmissionPower string `json:"transmissionpower"`
-	Modem             string `json:"modem"`
-	Antenna           string `json:"antenna"`
+	Frequency         string `json:"Frequency"`
+	TransmissionPower string `json:"TransmissionPower"`
+	Modem             string `json:"Modem"`
+	Antenna           string `json:"Antenna"`
 }
 
 func check(e error) {

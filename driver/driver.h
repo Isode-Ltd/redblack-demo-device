@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <set>
 #include <exception>
@@ -7,6 +8,7 @@
 #include <regex>
 #include <algorithm>
 #include <cctype>
+#include <map>
 
 // Device schema parsing
 #include <boost/property_tree/ptree.hpp>
@@ -45,6 +47,9 @@ class Driver {
     std::string device_family;            // device family
     std::set<std::string> status_params;  // device_status_params
     std::set<std::string> control_params; // device_control_params
+    std::map<std::string, std::string> param_ptype;  // param type ex: Integer, String, Boolean, DateTime
+    std::set<std::string> ptype;          // param type
+    std::string status_msg_format;        // generic format of a status message
 
     boost::asio::io_context ioc;          // io_context is required for all I/O
     int version;

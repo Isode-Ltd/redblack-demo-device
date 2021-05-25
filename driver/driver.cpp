@@ -111,6 +111,8 @@ void Driver :: Load (const std::string &file_device_schema) {
     }
 }
 
+// Send the HTTP Get request to the web device and fetch all the
+// device status and deivce control params.
 std :: string Driver :: HTTPGet (const std::string& target) {
 
     using namespace logging::trivial;
@@ -188,17 +190,20 @@ std :: string Driver :: HTTPGet (const std::string& target) {
             cbor status_msg(msg);
             BOOST_LOG_SEV(lg, info) << "Sending status messages : [" << msg << "]";
             //std::cout << "\n====================================================\n";
+            // Write to STDOUT in CBOR format.
             status_msg.write(std::cout);
             //std::cout << "\n====================================================\n";
         }
         // If we get here then the connection is closed gracefully
     } catch(std::exception const& e) {
-        std::cerr << "Error : " << e.what() << std::endl;
+        BOOST_LOG_SEV(lg, info) << "Error : " << e.what() << std::endl;
         return "ERROR";
     }
     return "SUCCESS";
 }
 
+// Send the HTTP Post request to the web device and set the
+// device control params.
 std :: string Driver :: HTTPPost (const std::string& target,
                                   const std::string& param,
                                   const std::string& value) {
@@ -270,6 +275,8 @@ std :: string Driver :: HTTPPost (const std::string& target,
     return "SUCCESS";
 }
 
+// Send the HTTP request ( Get / Post ) to the web device based
+// on the message received from the red black server.
 void Driver :: SendHTTPRequest (const std::string& rb_msg) {
 
     using namespace logging::trivial;
@@ -315,19 +322,16 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
 
             if (response == "SUCCESS") {
                 msg = std::regex_replace(msg, std::regex("Status"), "Control");
+                // Write to STDOUT in CBOR format.
                 cbor status_msg(msg);
                 BOOST_LOG_SEV(lg, info) << "Sending status messages : [" << msg << "]";
                 status_msg.write(std::cout);
             }
         } else if ( param_match[1] == "SendParameters" ) {
-            //std :: cout << "Device status param [" << param_match[1] << "] received. Will issue HTTP GET\n";
-            //std :: string param(param_match[1]);
-            //std :: transform(param.begin(), param.end(), param.begin(),
-            //               [](unsigned char c){ return std::tolower(c); });
             std :: string target("/device/" + device_name);
             std :: string response = HTTPGet(target);
-            if (response != "ERROR") {
-                std :: cout << "================= Success ==================\n";
+            if (response == "SUCCESS") {
+                BOOST_LOG_SEV(lg, info) << "Status and control params successfully sent to RB server.";
             }
         }
     }

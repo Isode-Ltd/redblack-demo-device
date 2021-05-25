@@ -19,6 +19,7 @@ Driver :: Driver(std::string dev_host, std::string dev_port, std::string dev_nam
     device_host(dev_host),
     device_port(dev_port),
     device_name(dev_name) {
+        // HTTP version
         version = 11;
         std::string param_types [] = {"Integer", "String", "Boolean", "DateTime", "Enumerated"};
         ptype.insert(param_types, param_types + sizeof(param_types)/sizeof(param_ptype[0]));

@@ -90,7 +90,7 @@ Read CBOR and printing it.
 ```
 $ g++ -DBOOST_LOG_DYN_LINK driver.cpp cbor11.cpp -lboost_log_setup -lboost_log -lboost_thread -lpthread -lboost_system -o driver
 
-kshi@ubox:/workspace/source_red_black/redblack$ build/sampledrivers/dummygodev "Radio" "schema/isode-radio.xml" "schema/stdparams.xml" | /workspace/red_black/rb_device/driver/driver /workspace/red_black/rb_device/driver/isode-radio.xml localhost 8080
+kshi@ubox:/workspace/source_red_black/redblack$ build/sampledrivers/dummygodev "Radio" "schema/isode-radio.xml" "schema/stdparams.xml" | /workspace/red_black/rb_device/driver/driver --host localhost --port 8080 radio schema/isode-radio.xml schema/stdparams.xml
 ```
 
 Sample output

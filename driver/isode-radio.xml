@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+<AbstractDeviceSpecification>
+  <DeviceType>IsodeRadio</DeviceType>
+  <DeviceFamily>Radio</DeviceFamily>
+  <DeviceTypeSummary>Basic Radio</DeviceTypeSummary>
+  <DeviceTypeDescription>
+    This models a generic Radio, looking at key target parameters.
+  </DeviceTypeDescription>
+  <ReferencedStatusParameters>
+    <Ref>DeviceType</Ref>
+    <Ref>Heartbeat</Ref>
+    <Ref>Status</Ref>
+    <Ref>StartTime</Ref>
+    <Ref>MonitoringSince</Ref>
+    <Ref>RunningSince</Ref>
+    <Ref>Version</Ref>
+    <Ref>Alert</Ref>
+    <Ref>DeviceTypeHash</Ref>
+    <Ref>UniqueID</Ref>
+    <Ref>Deleted</Ref>
+    <Ref>Exists</Ref>
+  </ReferencedStatusParameters>
+  <DeviceStatusParameters>
+    <Parameter>
+      <ParameterName>VSWR</ParameterName>
+      <ParameterSummary>Voltage Standing Wave Ratio</ParameterSummary>
+      <Integer>
+        <LowerBound>10</LowerBound>
+        <UpperBound>100</UpperBound>
+        <Multiplier>10</Multiplier>
+      </Integer>
+    </Parameter>
+    <Parameter>
+      <ParameterName>PowerSupplyVoltage</ParameterName>
+      <ParameterSummary>Power Supply Voltage</ParameterSummary>
+      <Units>Volts</Units>
+      <Integer>
+        <LowerBound>100</LowerBound>
+        <UpperBound>400</UpperBound>
+      </Integer>
+    </Parameter>
+    <Parameter>
+      <ParameterName>PowerSupplyConsumption</ParameterName>
+      <ParameterSummary>Power Supply Consumption</ParameterSummary>
+      <Units>Amperes</Units>
+      <Integer>
+        <LowerBound>1</LowerBound>
+        <UpperBound>100000</UpperBound>
+        <Multiplier>1000</Multiplier>
+      </Integer>
+    </Parameter>
+    <Parameter>
+      <ParameterName>Temperature</ParameterName>
+      <ParameterSummary>Temperature of Radio</ParameterSummary>
+      <Units>Degrees Celsius</Units>
+      <Integer>
+        <LowerBound>-20</LowerBound>
+        <UpperBound>200</UpperBound>
+      </Integer>
+    </Parameter>
+    <Parameter>
+      <ParameterName>SignalLevel</ParameterName>
+      <ParameterSummary>Signal Level (Baseband)</ParameterSummary>
+      <Units>dBm</Units>
+      <Integer>
+        <LowerBound>-40</LowerBound>
+        <UpperBound>15</UpperBound>
+      </Integer>
+    </Parameter>
+  </DeviceStatusParameters>
+  <ReferencedControlParameters>
+    <Ref>SendParameters</Ref>
+    <Ref>DeviceDescription</Ref>
+    <Ref>Enabled</Ref>
+    <Ref>Reset</Ref>
+    <Ref>PowerOff</Ref>
+  </ReferencedControlParameters>
+  <DeviceControlParameters>
+    <Parameter>
+      <ParameterName>Frequency</ParameterName>
+      <ParameterSummary>Radio Frequency</ParameterSummary>
+      <ParameterDescription>
+        Setting frequency as control parameter allows operator to set frequency.
+        always controlled by ALE, this would be moved to a status parameter.
+        If frequency
+        The frequency integer is in kHz, shifted three places
+      </ParameterDescription>
+      <Units>MHz</Units>
+      <SetByOperator/>
+      <Integer>
+        <LowerBound>3000</LowerBound>
+        <UpperBound>30000</UpperBound>
+        <Multiplier>1000</Multiplier>
+      </Integer>
+    </Parameter>
+    <Parameter>
+      <ParameterName>TransmissionPower</ParameterName>
+      <ParameterSummary>Transmission Power</ParameterSummary>
+      <Units>Watts</Units>
+      <Integer>
+        <LowerBound>1</LowerBound>
+        <UpperBound>20000</UpperBound>
+      </Integer>
+    </Parameter>
+
+    <Parameter>
+      <ParameterName>Modem</ParameterName>
+      <ParameterSummary>A modem</ParameterSummary>
+      <RedBlackManaged/>
+      <Connection>
+        <Fixed/>
+        <DirectType>Audio</DirectType>
+        <IndirectType>Modem</IndirectType>
+      </Connection>
+    </Parameter>
+    <Parameter>
+      <ParameterName>Antenna</ParameterName>
+      <ParameterSummary>Connected Antenna or PA</ParameterSummary>
+      <RedBlackManaged/>
+      <Connection>
+        <Fixed/>
+        <ConnectTo/>
+        <DirectType>RF</DirectType>
+        <IndirectType>PA</IndirectType>
+      </Connection>
+    </Parameter>
+  </DeviceControlParameters>
+</AbstractDeviceSpecification>

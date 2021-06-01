@@ -21,10 +21,11 @@ Driver :: Driver(std::string dev_host, std::string dev_port, std::string dev_nam
     device_name(dev_name) {
         // HTTP version
         version = 11;
-        std::string param_types [] = {"Integer", "String", "Boolean", "DateTime", "Enumerated"};
+        std::string param_types [] = {"Integer", "String", "Boolean",
+                                      "DateTime", "Enumerated", "AlertType"};
         ptype.insert(param_types, param_types + sizeof(param_types)/sizeof(param_ptype[0]));
 
-        status_msg_format = "<Status><Device>" + dev_name + "</Device><DeviceType>_devicetype_</DeviceType><Param>_paramname_</Param><_paramtype_>_paramvalue_</_paramtype_></Status>";
+        status_msg_format = "<Status><Device>" + dev_name + "</Device><DeviceType>_devicetype_</DeviceType><Param>_paramname_</Param><_paramtype_>_paramvalue_</_paramtype_></Status>\n";
 }
 
 Driver :: ~Driver() {
@@ -50,20 +51,24 @@ void Driver :: InitLogging (void) {
     logging::add_common_attributes();
 }
 
-// Parse the device schema XML and extract the Device Status & Device Control Params
-void Driver :: Load (const std::string &file_device_schema) {
+// Parse the device schema XML and standard parameters XML and do the below
+// 1. Extract the Device Status & Device Control Params
+// 2. Extract the Reference Status & Reference Control Params
+// 3. Extract the Standard Parameters
+
+void Driver :: Load (const std::string &file_device_schema, const std::string &file_stdparams) {
 
     using namespace logging::trivial;
     src::severity_logger<severity_level> lg;
 
     // Create empty property tree object
-    pt::ptree tree;
+    pt::ptree device_tree;
 
     // Parse the XML into the property tree.
-    pt::read_xml(file_device_schema, tree);
+    pt::read_xml(file_device_schema, device_tree);
 
-    device_type = tree.get<std::string>("AbstractDeviceSpecification.DeviceType");
-    device_family = tree.get<std::string>("AbstractDeviceSpecification.DeviceFamily");
+    device_type = device_tree.get<std::string>("AbstractDeviceSpecification.DeviceType");
+    device_family = device_tree.get<std::string>("AbstractDeviceSpecification.DeviceFamily");
 
     status_msg_format = std::regex_replace(status_msg_format, std::regex("_devicetype_"), device_type);
 
@@ -73,24 +78,22 @@ void Driver :: Load (const std::string &file_device_schema) {
     BOOST_LOG_SEV(lg, info) << "Fetching device status parameters";
 
     // Get list of device status params from the xml schema file.
-    BOOST_FOREACH(pt::ptree::value_type &v,
-        tree.get_child("AbstractDeviceSpecification.DeviceStatusParameters")) {
-
+    for (auto& v : device_tree.get_child("AbstractDeviceSpecification.DeviceStatusParameters")) {
         bool found = false;
-        std::string tmp("");
-        BOOST_FOREACH(pt::ptree::value_type &p, v.second) {
-
-            std::string param = p.first.data();
+        std::string param_name("");
+        for (auto& p : v.second) {
+            std::string tag = p.first.data();
             // Store the param
-            if (param == "ParameterName") {
+            if (tag == "ParameterName") {
                 status_params.insert(p.second.data());
                 found = true;
-                tmp = p.second.data();
+                param_name = p.second.data();
             }
-            // Store the param and param_type
-            if (found and ptype.find(param) != ptype.end()) {
-                param_ptype.insert(std::pair<std::string,std::string>(tmp, param));
-                BOOST_LOG_SEV(lg, info) << "Param [" << tmp << "], Type [" << param << "]";
+            // If the next found tag is param_type (String, Integer, Boolean,...),
+            // store the earlier found param and param type.
+            else if (found and ptype.find(tag) != ptype.end()) {
+                param_ptype.insert(std::pair<std::string,std::string>(param_name, tag));
+                BOOST_LOG_SEV(lg, info) << "Param [" << param_name << "], Type [" << tag << "]";
                 found = false;
             }
         }
@@ -99,10 +102,8 @@ void Driver :: Load (const std::string &file_device_schema) {
     BOOST_LOG_SEV(lg, info) << "Fetching device control parameters";
 
     // Get list of device status params from the xml schema file.
-    BOOST_FOREACH(pt::ptree::value_type &v,
-        tree.get_child("AbstractDeviceSpecification.DeviceControlParameters")) {
-
-        BOOST_FOREACH(pt::ptree::value_type &p, v.second) {
+    for (auto& v : device_tree.get_child("AbstractDeviceSpecification.DeviceControlParameters")) {
+        for (auto& p : v.second) {
             std::string param = p.first.data();
             if (param == "ParameterName") {
                 BOOST_LOG_SEV(lg, info) << "[" << p.second.data() << "]";
@@ -110,11 +111,38 @@ void Driver :: Load (const std::string &file_device_schema) {
             }
         }
     }
+
+    pt::ptree stdparams_tree;
+    pt::read_xml(file_stdparams, stdparams_tree);
+
+    // Get list of standard params and their types..
+    BOOST_LOG_SEV(lg, info) << "Fetching standard parameters and their types";
+
+    for (auto& v : stdparams_tree.get_child("StandardParameterList")) {
+        bool found = false;
+        std::string param_name("");
+        std::string param_type("");
+        for (auto& p : v.second) {
+            std::string tag = p.first.data();
+            // Store the param
+            if (tag == "ParameterName") {
+                found = true;
+                param_name = p.second.data();
+            }
+            // If the next found tag is param_type (String, Integer, Boolean,...),
+            // store the earlier found param and param type.
+            else if (found and ptype.find(tag) != ptype.end()) {
+                stdparams_ptype.insert(std::pair<std::string,std::string>(param_name, tag));
+                BOOST_LOG_SEV(lg, info) << "Param [" << param_name << "], Type [" << tag << "]";
+                found = false;
+            }
+        }
+    }
 }
 
 // Send the HTTP Get request to the web device and fetch all the
 // device status and deivce control params.
-std :: string Driver :: HTTPGet (const std::string& target) {
+std :: string Driver :: HTTPGet (const std::string& target, bool all_params) {
 
     using namespace logging::trivial;
     src::severity_logger<severity_level> lg;
@@ -330,7 +358,7 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
             }
         } else if ( param_match[1] == "SendParameters" ) {
             std :: string target("/device/" + device_name);
-            std :: string response = HTTPGet(target);
+            std :: string response = HTTPGet(target, true);
             if (response == "SUCCESS") {
                 BOOST_LOG_SEV(lg, info) << "Status and control params successfully sent to RB server.";
             }
@@ -355,35 +383,54 @@ void Driver :: Start (void) {
 
         item.write(obj);
         std::string rb_msg = obj.str();
-
         SendHTTPRequest(rb_msg);
     }
 }
 
 int main (int argc, char * argv[]) {
 
-    if (argc < 4) {
-        std::cout << "Usage ./driver <device_schema> <device_host> <device_port> <device_name_optional>";
+    boost::program_options::options_description desc
+        ("\nMandatory arguments marked with '*'.\n"
+           "Invocation : <drive_executable> --host <hostname> --port <port> <device_name> <schema_file> <std_params_file>\nAgruments");
+
+    desc.add_options ()
+    ("host", boost::program_options::value<std::string>()->required(),
+                 "Hostname.")
+    ("port",  boost::program_options::value<std::string>()->required(),
+                 "Port");
+
+    boost::program_options::variables_map vm;
+
+    try {
+        boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(desc).run(), vm);
+        boost::program_options::notify(vm);
+    } catch (boost::program_options::error& e) {
+        std::cout << "ERROR: " << e.what() << "\n";
+        std::cout << desc << "\n";
+        return 1;
+    }
+
+    if (argc < 8) {
+        std::cout << "Error !! Check usage below.\n";
+        std::cout << "Invocation : <drive_executable> --host <hostname> --port <port> <device_name> <schema_file> <std_params_file>";
         exit(0);
     }
 
     // Parse the isode-radio.xml device configuration file and store
     // the device status and device control params.
-    std :: string host(argv[2]);
-    std :: string port(argv[3]);
-    std :: string name("radio");
-    if (argc > 4) {
-        name = argv[4];
-    }
+    std :: string host(vm["host"].as<std::string>());
+    std :: string port(vm["port"].as<std::string>());
+    std :: string name(argv[5]);
 
     Driver driver(host, port, name);
     driver.InitLogging();
 
     try {
-        driver.Load(std::string(argv[1]));
+        driver.Load(std::string(argv[6]), std::string(argv[7]));
     } catch (std::exception &e) {
         std::cout << "Error: " << e.what() << "\n";
     }
+
     driver.Start();
     return 0;
 }

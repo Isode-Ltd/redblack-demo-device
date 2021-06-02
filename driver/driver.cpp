@@ -83,9 +83,10 @@ void Driver :: Load (const std::string &file_device_schema, const std::string &f
         std::string param_name("");
         for (auto& p : v.second) {
             std::string tag = p.first.data();
-            // Store the param
+            // Store the param and the value. Since we can't fetch the device status value at this stage
+            // set it to NONE.
             if (tag == "ParameterName") {
-                status_params.insert(p.second.data());
+                status_params_val.insert(std::pair<std::string,std::string>(p.second.data(), "NONE"));
                 found = true;
                 param_name = p.second.data();
             }
@@ -142,7 +143,7 @@ void Driver :: Load (const std::string &file_device_schema, const std::string &f
 
 // Send the HTTP Get request to the web device and fetch all the
 // device status and deivce control params.
-std :: string Driver :: HTTPGet (const std::string& target, bool all_params) {
+std :: string Driver :: HTTPGet (const std::string& target, std::map<std::string, std::string>& stat_param_value) {
 
     using namespace logging::trivial;
     src::severity_logger<severity_level> lg;
@@ -210,18 +211,10 @@ std :: string Driver :: HTTPGet (const std::string& target, bool all_params) {
         // Example : ptree with one entry would have something like { "PowerSupplyConsumption" : "31" }
         // param_ptye is a map like { "PowerSupplyConsumption" : "Integer" }
         for (ptree::const_iterator it = pt.begin(); it != pt.end(); ++it) {
-            std::string msg = status_msg_format;
-            msg = std::regex_replace(msg, std::regex("_paramname_"), it->first);
-            msg = std::regex_replace(msg, std::regex("_paramtype_"), param_ptype[it->first]);
-            std::string value = it->second.get_value<std::string>();
-            msg = std::regex_replace(msg, std::regex("_paramvalue_"), value);
 
-            cbor status_msg(msg);
-            BOOST_LOG_SEV(lg, info) << "Sending status messages : [" << msg << "]";
-            //std::cout << "\n====================================================\n";
-            // Write to STDOUT in CBOR format.
-            status_msg.write(std::cout);
-            //std::cout << "\n====================================================\n";
+            std::string param = it->first;
+            std::string value = it->second.get_value<std::string>();
+            stat_param_value.insert(std::pair<std::string,std::string>(param, value) );
         }
         // If we get here then the connection is closed gracefully
     } catch(std::exception const& e) {
@@ -357,11 +350,71 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
                 status_msg.write(std::cout);
             }
         } else if ( param_match[1] == "SendParameters" ) {
+            // Fetch all parameters (Status & Control) using HTTP Get Request
             std :: string target("/device/" + device_name);
-            std :: string response = HTTPGet(target, true);
+            std :: map<std::string, std::string> dev_status;
+            std :: string response = HTTPGet(target, dev_status);
             if (response == "SUCCESS") {
-                BOOST_LOG_SEV(lg, info) << "Status and control params successfully sent to RB server.";
+                for (const auto& entry : dev_status) {
+                    std::string msg = status_msg_format;
+                    msg = std::regex_replace(msg, std::regex("_paramname_"), entry.first);
+                    msg = std::regex_replace(msg, std::regex("_paramtype_"), param_ptype[entry.first]);
+                    msg = std::regex_replace(msg, std::regex("_paramvalue_"), entry.second);
+
+                    cbor status_msg(msg);
+                    BOOST_LOG_SEV(lg, info) << "Sending status messages to RB : [" << msg << "]";
+
+                    // Write to STDOUT in CBOR format.
+                    status_msg.write(std::cout);
+                }
             }
+        }
+    }
+}
+
+void Driver :: SendStatus (bool send_all_param) {
+
+    using namespace logging::trivial;
+    src::severity_logger<severity_level> lg;
+
+    std :: string target("/device/" + device_name + "/status");
+    std :: map<std::string, std::string> dev_status;
+    std :: string response = HTTPGet(target, dev_status);
+
+    if (response != "SUCCESS")
+        return;
+
+    // If only updated device status params are to be sent,
+    // keep only the updated entries and remove the rest.
+    // Also update the current device status.
+    if ( send_all_param == false ) {
+        for ( const auto& entry : status_params_val ) {
+            std::map<std::string, std::string>::iterator it;
+            it = dev_status.find(entry.first);
+            if ( it != dev_status.end() ) {
+                // This device status param value has not been updated.
+                // Hence remove it.
+                if ( dev_status[entry.first] == entry.second) {
+                    dev_status.erase(it);
+                } else {
+                    status_params_val[entry.first] = dev_status[entry.first];
+                }
+            }
+        }
+    }
+
+    if (response == "SUCCESS") {
+        for (const auto& entry : dev_status) {
+            std::string msg = status_msg_format;
+            msg = std::regex_replace(msg, std::regex("_paramname_"), entry.first);
+            msg = std::regex_replace(msg, std::regex("_paramtype_"), param_ptype[entry.first]);
+            msg = std::regex_replace(msg, std::regex("_paramvalue_"), entry.second);
+
+            cbor status_msg(msg);
+            BOOST_LOG_SEV(lg, info) << "Sending status messages to RB : [" << msg << "]";
+
+            // Write to STDOUT in CBOR format.
+            status_msg.write(std::cout);
         }
     }
 }
@@ -371,6 +424,10 @@ void Driver :: Start (void) {
     cbor item;
     using namespace logging::trivial;
     src::severity_logger<severity_level> lg;
+
+    // Send the status of all the device parameters to RB
+    bool all_params = true;
+    SendStatus(all_params);
 
     while(1) {
 

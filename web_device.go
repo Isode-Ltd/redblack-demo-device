@@ -69,6 +69,7 @@ func (p *Device) save() error {
 func LoadDeviceInfo(devicetype string) (*Device, error) {
 
 	// Read the status parameters of the device
+
 	filename := devicetype + ".status"
 	status_file, err := os.Open(filename)
 
@@ -214,7 +215,7 @@ func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	}
 }
 
-func GetDeviceStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetAllDeviceParams(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	device_info, err := LoadDeviceInfo(ps.ByName("device"))
 
@@ -223,7 +224,7 @@ func GetDeviceStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	}
 }
 
-func GetStatusParam(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func GetParam(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	device_info, err := LoadDeviceInfo(ps.ByName("device"))
 	param := ps.ByName("param")
@@ -240,6 +241,19 @@ func GetStatusParam(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 		} else if param == "temperature" {
 			json.NewEncoder(w).Encode(device_info.Temperature)
 		}
+	}
+}
+
+func GetAllDeviceStatus(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
+	device_info, err := LoadDeviceInfo(ps.ByName("device"))
+	map_status := map[string]string{"VSWR": device_info.VSWR,
+		"PowerSupplyVoltage":     device_info.PowerSupplyVoltage,
+		"PowerSupplyConsumption": device_info.PowerSupplyConsumption,
+		"Temperature":            device_info.Temperature,
+		"SignalLevel":            device_info.SignalLevel}
+	if err == nil {
+		json.NewEncoder(w).Encode(map_status)
 	}
 }
 
@@ -300,8 +314,9 @@ func main() {
 	router.GET("/view/:device", ViewHandler)
 	router.GET("/edit/:device", EditHandler)
 	router.GET("/save/:device", SaveHandler)
-	router.GET("/device/:device/param/:param", GetStatusParam)
-	router.GET("/device/:device", GetDeviceStatus)
+	router.GET("/device/:device/param/:param", GetParam)
+	router.GET("/device/:device", GetAllDeviceParams)
+	router.GET("/device/:device/status", GetAllDeviceStatus)
 	router.POST("/device/:device/control", SetControlParam)
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

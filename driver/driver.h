@@ -49,7 +49,7 @@ class Driver {
     std::string device_type;                  // device type
     std::string device_family;                // device family
 
-    std::set<std::string> status_params;      // device_status_params
+    std::map<std::string, std::string> status_params_val; // device_status_params_value
     std::set<std::string> ref_status_params;  // reference status_params
 
     std::set<std::string> control_params;     // device_control_params
@@ -79,12 +79,15 @@ class Driver {
     // Initialize driver logging.
     void InitLogging(void);
 
+    // Send the device status to RB.
+    void SendStatus(bool send_all);
+
     // Send an HTTP Request ( Get / Post ) to the rb devices based on message received from 
     // the red-black server.
     void SendHTTPRequest(const std::string& rb_msg);
 
     // Send HTTP Get request to the rb device and get the status using device status parameters.
-    std::string HTTPGet(const std::string& target_device, bool all_params);
+    std::string HTTPGet(const std::string& target_device, std::map<std::string, std::string>& status_param_val);
 
     // Send HTTP Post request to the rb device to modify device control parameters.
     std::string HTTPPost(const std::string& target_device, const std::string& param, const std::string& value);

@@ -5,28 +5,11 @@
 </head>
 
 <style>
-    table {
-      width:50%;
-    }
-    table, th, td {
-      border: 1px solid black;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 15px;
-      text-align: left;
-    }
-    #tab-alt tr:nth-child(even) {
-      background-color: #eee;
-    }
-    #tab-alt tr:nth-child(odd) {
-     background-color: #fff;
-    }
-    #tab-alt th {
-      background-color: black;
-      color: white;
-    }
-    .button {
+  * {
+    box-sizing: border-box;
+  }
+
+  .button {
         background-color: #008CBA; /* Green */
         border: none;
         color: white;
@@ -37,64 +20,154 @@
         font-size: 16px;
         margin: 4px 2px;
         cursor: pointer;
-    }
+  }
+
+  .row {
+    margin-left:-5px;
+    margin-right:-5px;
+  }
+
+  .column {
+    float: left;
+    width: 50%;
+    padding: 5px;
+  }
+
+  /* Clearfix (clear floats) */
+  .row::after {
+    content: "";
+    clear: both;
+    display: table;
+  }
+
+  table {
+    border-collapse: collapse;
+    border-spacing: 2;
+    width: 95%;
+    border: 1px solid #ddd;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 16px;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  tr:nth-child(odd) {
+    background-color: white;
+  }
+  #tab-alt th {
+      background-color: black;
+      color: white;
+  }
+  #tab-alt tr:nth-child(even) {
+      background-color: #eee;
+  }
+
+  #tab-alt tr:nth-child(odd) {
+     background-color: white;
+  }
 </style>
 
 <h2>Device [{{.DeviceType}}]</h2>
 
-<table id="tab-alt">
-    <tr>
-      <th>Status Parameters</th>
-      <th>Value</th>
-    </tr>
-    <tr>
-      <td>Voltage Standing Wave Ratio</td>
-      <td>{{printf "%s" .VSWR}}</td>
-    </tr>
-    <tr>
-      <td>Power Supply Voltage</td>
-      <td>{{printf "%s" .PowerSupplyVoltage}}</td>
-    </tr>
-    <tr>
-      <td>Power Supply Consumption</td>
-      <td>{{printf "%s" .PowerSupplyConsumption}}</td>
-    </tr>
-    <tr>
-      <td>Temperature of Radio</td>
-      <td>{{printf "%s" .Temperature}}</td>
-    </tr>
-    <tr>
-      <td>Signal Level</td>
-      <td>{{printf "%s" .SignalLevel}}</td>
-    </tr>
-</table>
-<br>
-<form action="/edit/{{.DeviceType}}">
-  <input class="button" type="submit" value="Update Parameters" />
-</form>
-
-<br><br><br>
-<table id="tab-alt">
-  <tr>
-    <th>Control Parameters</th>
-    <th>Value</th>
-  </tr>
-  <tr>
-    <td>Frequency</td>
-    <td>{{printf "%s" .Frequency}}</td>
-  </tr>
-  <tr>
-    <td>Transmission Power</td>
-    <td>{{printf "%s" .TransmissionPower}}</td>
-  </tr>
-  <tr>
-    <td>Modem</td>
-    <td>{{printf "%s" .Modem}}</td>
-  </tr>
-  <tr>
-    <td>Antenna</td>
-    <td>{{printf "%s" .Antenna}}</td>
-  </tr>
-</table>
-
+<div class="row">
+  <div class="column">
+    <table id="tab-alt">
+        <tr>
+          <th>Status Parameters</th>
+          <th>Value</th>
+        </tr>
+        <tr>
+          <td>Voltage Standing Wave Ratio</td>
+          <td>{{printf "%s" .VSWR}}</td>
+        </tr>
+        <tr>
+          <td>Power Supply Voltage</td>
+          <td>{{printf "%s" .PowerSupplyVoltage}}</td>
+        </tr>
+        <tr>
+          <td>Power Supply Consumption</td>
+          <td>{{printf "%s" .PowerSupplyConsumption}}</td>
+        </tr>
+        <tr>
+          <td>Temperature of Radio</td>
+          <td>{{printf "%s" .Temperature}}</td>
+        </tr>
+        <tr>
+          <td>Signal Level</td>
+          <td>{{printf "%s" .SignalLevel}}</td>
+        </tr>
+    </table>
+    <br>
+    <table id="tab-alt">
+        <tr>
+          <th>Device Reference Parameters</th>
+          <th>Value</th>
+        </tr>
+        <tr>
+          <td>Device Type</td>
+          <td>{{printf "%s" .DeviceType}}</td>
+        </tr>
+        <tr>
+          <td>Device Type Hash</td>
+          <td>{{printf "%s" .DeviceTypeHash}}</td>
+        </tr>
+        <tr>
+          <td>Unique Id</td>
+          <td>{{printf "%s" .UniqueId}}</td>
+        </tr>
+        <tr>
+          <td>Version</td>
+          <td>{{printf "%s" .Version}}</td>
+        </tr>
+        <tr>
+          <td>Status</td>
+          <td>{{printf "%s" .Status}}</td>
+        </tr>
+        <tr>
+          <td>Start Time</td>
+          <td>{{printf "%s" .StartTime}}</td>
+        </tr>
+        <tr>
+          <td>Running Since</td>
+          <td>{{printf "%s" .RunningSince}}</td>
+        </tr>
+        <tr>
+          <td>Alert</td>
+          <td>{{printf "%s" .Alert}}</td>
+        </tr>
+    </table>
+    <br>
+    <form action="/edit/{{.DeviceType}}">
+    <input class="button" type="submit" value="Update Parameters" />
+    </form>
+  </div>
+  <div class="column">
+    <table id="tab-alt">
+      <tr>
+        <th>Control Parameters</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td>Frequency</td>
+        <td>{{printf "%s" .Frequency}}</td>
+      </tr>
+      <tr>
+        <td>Transmission Power</td>
+        <td>{{printf "%s" .TransmissionPower}}</td>
+      </tr>
+      <tr>
+        <td>Modem</td>
+        <td>{{printf "%s" .Modem}}</td>
+      </tr>
+      <tr>
+        <td>Antenna</td>
+        <td>{{printf "%s" .Antenna}}</td>
+      </tr>
+    </table>
+  </div>
+</div>
 </html>

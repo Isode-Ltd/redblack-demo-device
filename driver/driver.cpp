@@ -441,6 +441,9 @@ void Driver :: Start (void) {
         item.write(obj);
         std::string rb_msg = obj.str();
         SendHTTPRequest(rb_msg);
+
+        all_params = false;
+        SendStatus(false);
     }
 }
 

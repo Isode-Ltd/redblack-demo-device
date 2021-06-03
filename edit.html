@@ -47,31 +47,65 @@
 <form action="/save/{{.DeviceType}}" method="GET">
     <table id="tab-alt">
         <tr>
-            <th>Parameter</th>
+            <th>Device Status Parameter</th>
             <th>Value</th>
         </tr>
         <tr>
             <td>Voltage Standing Wave Ratio</td>
-            <td><textarea name="VSWR" rows="2" cols="10">{{printf "%s" .VSWR}}</textarea></td>
+            <td><textarea name="VSWR" rows="2" cols="20">{{printf "%s" .VSWR}}</textarea></td>
         </tr>
         <tr>
             <td>Power Supply Voltage</td>
-            <td><textarea name="PowerSupplyVoltage" rows="2" cols="10">{{printf "%s" .PowerSupplyVoltage}}</textarea></td>
+            <td><textarea name="PowerSupplyVoltage" rows="2" cols="20">{{printf "%s" .PowerSupplyVoltage}}</textarea></td>
         </tr>
         <tr>
             <td>Power Supply Consumption</td>
-            <td><textarea name="PowerSupplyConsumption" rows="2" cols="10">{{printf "%s" .PowerSupplyConsumption}}</textarea></td>
+            <td><textarea name="PowerSupplyConsumption" rows="2" cols="20">{{printf "%s" .PowerSupplyConsumption}}</textarea></td>
         </tr>
         <tr>
             <td>Temperature of Radio</td>
-            <td><textarea name="Temperature" rows="2" cols="10">{{printf "%s" .Temperature}}</textarea></td>
+            <td><textarea name="Temperature" rows="2" cols="20">{{printf "%s" .Temperature}}</textarea></td>
         </tr>
         <tr>
             <td>Signal Level</td>
-            <td><textarea name="SignalLevel" rows="2" cols="10">{{printf "%s" .SignalLevel}}</textarea></td>
+            <td><textarea name="SignalLevel" rows="2" cols="20">{{printf "%s" .SignalLevel}}</textarea></td>
         </tr>
     </table>
     <br>
+    <table id="tab-alt">
+        <tr>
+            <th>Reference Parameter</th>
+            <th>Value</th>
+        </tr>
+        <tr>
+            <td>Devie Type Hash</td>
+            <td><textarea name="DeviceTypeHash" rows="2" cols="20">{{printf "%s" .DeviceTypeHash}}</textarea></td>
+        </tr>
+        <tr>
+            <td>Unique Id</td>
+            <td><textarea name="UniqueId" rows="2" cols="20">{{printf "%s" .UniqueId}}</textarea></td>
+        </tr>
+        <tr>
+            <td>Version</td>
+            <td><textarea name="Version" rows="2" cols="20">{{printf "%s" .Version}}</textarea></td>
+        </tr>
+        <tr>
+            <td>Status</td>
+            <td><textarea name="Status" rows="2" cols="20">{{printf "%s" .Status}}</textarea></td>
+        </tr>
+        <tr>
+            <td>Start Time</td>
+            <td><textarea name="StartTime" rows="2" cols="20" readonly>{{printf "%s" .StartTime}}</textarea></td>
+        </tr>
+        <tr>
+            <td>Running Since</td>
+            <td><textarea name="RunningSince" rows="2" cols="20" readonly>{{printf "%s" .RunningSince}}</textarea></td>
+        </tr>
+        <tr>
+            <td>Alert</td>
+            <td><textarea name="Alert" rows="2" cols="20">{{printf "%s" .Alert}}</textarea></td>
+        </tr>
+    </table>
     <div><input class="button" type="submit" value="Save"></div>
 
 </form>

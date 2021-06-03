@@ -84,9 +84,9 @@ void Driver :: Load (const std::string &file_device_schema, const std::string &f
         for (auto& p : v.second) {
             std::string tag = p.first.data();
             // Store the param and the value. Since we can't fetch the device status value at this stage
-            // set it to NONE.
+            // set it to "".
             if (tag == "ParameterName") {
-                status_params_val.insert(std::pair<std::string,std::string>(p.second.data(), "NONE"));
+                status_params_val.insert(std::pair<std::string,std::string>(p.second.data(), ""));
                 found = true;
                 param_name = p.second.data();
             }
@@ -111,6 +111,13 @@ void Driver :: Load (const std::string &file_device_schema, const std::string &f
                 control_params.insert(p.second.data());
             }
         }
+    }
+
+    // Get list of referenced status params from the xml schema file and store the value as ""
+    // as no value could be fetched at this stage.
+    for (auto& v : device_tree.get_child("AbstractDeviceSpecification.ReferencedStatusParameters")) {
+         ref_params_val.insert(std::pair<std::string, std::string>(v.second.data(),""));
+         std::cout << v.second.data() << std::endl;
     }
 
     pt::ptree stdparams_tree;
@@ -217,7 +224,7 @@ std :: string Driver :: HTTPGet (const std::string& target, std::map<std::string
             stat_param_value.insert(std::pair<std::string,std::string>(param, value) );
         }
         // If we get here then the connection is closed gracefully
-    } catch(std::exception const& e) {
+    } catch ( std::exception const& e ) {
         BOOST_LOG_SEV(lg, info) << "Error : " << e.what() << std::endl;
         return "ERROR";
     }
@@ -286,11 +293,11 @@ std :: string Driver :: HTTPPost (const std::string& target,
         // not_connected happens sometimes
         // so don't bother reporting it.
         //
-        if(ec && ec != beast::errc::not_connected)
+        if( ec && ec != beast::errc::not_connected )
             throw beast::system_error{ec};
 
         // If we get here then the connection is closed gracefully
-    } catch (std::exception const& e) {
+    } catch ( std::exception const& e ) {
         BOOST_LOG_SEV(lg, info) << "Error: " << e.what();
         return "ERROR";
     }
@@ -318,9 +325,9 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
     std :: regex param_regex("<.*<Param>(.*)</Param>(.*)</Status>");
     std :: smatch param_match;
 
-    if (std::regex_search(rb_msg, param_match, param_regex)) {
+    if ( std::regex_search(rb_msg, param_match, param_regex) ) {
 
-        if (control_params.find(param_match[1]) != control_params.end()) {
+        if ( control_params.find(param_match[1]) != control_params.end() ) {
 
             std :: string msg(param_match[0]);
             std :: string param(param_match[1]);
@@ -330,7 +337,7 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
             std :: smatch value_match;
 
             std :: string value("");
-            if (std::regex_search(encaps_value, value_match, value_regex)) {
+            if ( std::regex_search(encaps_value, value_match, value_regex) ) {
                 value = value_match[1];
             }
 
@@ -342,7 +349,7 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
             // Send HTTP Post Request
             std :: string response = HTTPPost(target, param, value);
 
-            if (response == "SUCCESS") {
+            if ( response == "SUCCESS" ) {
                 msg = std::regex_replace(msg, std::regex("Status"), "Control");
                 // Write to STDOUT in CBOR format.
                 cbor status_msg(msg);
@@ -354,15 +361,15 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
             std :: string target("/device/" + device_name);
             std :: map<std::string, std::string> dev_status;
             std :: string response = HTTPGet(target, dev_status);
-            if (response == "SUCCESS") {
-                for (const auto& entry : dev_status) {
+            if ( response == "SUCCESS" ) {
+                for ( const auto& entry : dev_status ) {
                     std::string msg = status_msg_format;
                     msg = std::regex_replace(msg, std::regex("_paramname_"), entry.first);
                     msg = std::regex_replace(msg, std::regex("_paramtype_"), param_ptype[entry.first]);
                     msg = std::regex_replace(msg, std::regex("_paramvalue_"), entry.second);
 
                     cbor status_msg(msg);
-                    BOOST_LOG_SEV(lg, info) << "Sending status messages to RB : [" << msg << "]";
+                    BOOST_LOG_SEV(lg, info) << "Sending status and control params to RB : [" << msg << "]";
 
                     // Write to STDOUT in CBOR format.
                     status_msg.write(std::cout);
@@ -372,16 +379,19 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
     }
 }
 
-void Driver :: SendStatus (bool send_all_param) {
+// SendDeviceStatus function would send the status of all the device status params to RB server
+// if send_all_param is set to true. If it is set to false, it would only send the status
+// of the updated device status params.
+void Driver :: SendDeviceStatus (bool send_all_param) {
 
     using namespace logging::trivial;
     src::severity_logger<severity_level> lg;
 
     std :: string target("/device/" + device_name + "/status");
-    std :: map<std::string, std::string> dev_status;
-    std :: string response = HTTPGet(target, dev_status);
+    std :: map<std::string, std::string> current_dev_status;
+    std :: string response = HTTPGet(target, current_dev_status);
 
-    if (response != "SUCCESS")
+    if ( response != "SUCCESS" )
         return;
 
     // If only updated device status params are to be sent,
@@ -390,32 +400,75 @@ void Driver :: SendStatus (bool send_all_param) {
     if ( send_all_param == false ) {
         for ( const auto& entry : status_params_val ) {
             std::map<std::string, std::string>::iterator it;
-            it = dev_status.find(entry.first);
-            if ( it != dev_status.end() ) {
+            it = current_dev_status.find(entry.first);
+            if ( it != current_dev_status.end() ) {
                 // This device status param value has not been updated.
                 // Hence remove it.
-                if ( dev_status[entry.first] == entry.second) {
-                    dev_status.erase(it);
+                if ( current_dev_status[entry.first] == entry.second ) {
+                    current_dev_status.erase(it);
                 } else {
-                    status_params_val[entry.first] = dev_status[entry.first];
+                    status_params_val[entry.first] = current_dev_status[entry.first];
                 }
             }
         }
     }
 
-    if (response == "SUCCESS") {
-        for (const auto& entry : dev_status) {
-            std::string msg = status_msg_format;
-            msg = std::regex_replace(msg, std::regex("_paramname_"), entry.first);
-            msg = std::regex_replace(msg, std::regex("_paramtype_"), param_ptype[entry.first]);
-            msg = std::regex_replace(msg, std::regex("_paramvalue_"), entry.second);
+    for ( const auto& entry : current_dev_status ) {
+        std::string msg = status_msg_format;
+        msg = std::regex_replace(msg, std::regex("_paramname_"), entry.first);
+        msg = std::regex_replace(msg, std::regex("_paramtype_"), param_ptype[entry.first]);
+        msg = std::regex_replace(msg, std::regex("_paramvalue_"), entry.second);
 
-            cbor status_msg(msg);
-            BOOST_LOG_SEV(lg, info) << "Sending status messages to RB : [" << msg << "]";
+        cbor status_msg(msg);
+        BOOST_LOG_SEV(lg, info) << "Sending device status params to RB : [" << msg << "]";
 
-            // Write to STDOUT in CBOR format.
-            status_msg.write(std::cout);
+        // Write to STDOUT in CBOR format.
+        status_msg.write(std::cout);
+    }
+}
+
+// SendRefStatus function would send the reference status params of the device to the RB server
+void Driver :: SendRefStatus () {
+
+    using namespace logging::trivial;
+    src::severity_logger<severity_level> lg;
+
+    std :: string target("/device/" + device_name + "/ref");
+    std :: map<std::string, std::string> current_ref_params;
+    std :: string response = HTTPGet(target, current_ref_params);
+
+    if ( response != "SUCCESS" )
+        return;
+
+    // If only updated referenced params are to be sent,
+    // keep just the updated entries and remove the rest.
+    // Also update the current referenced status.
+
+    for ( const auto& entry : ref_params_val ) {
+        std::map<std::string, std::string>::iterator it;
+        it = current_ref_params.find(entry.first);
+        if ( it != current_ref_params.end() ) {
+            // This referenced status param value has not been updated,
+            // hence remove it.
+            if ( current_ref_params[entry.first] == entry.second ) {
+                current_ref_params.erase(it);
+            } else {
+                ref_params_val[entry.first] = current_ref_params[entry.first];
+            }
         }
+    }
+
+    for ( const auto& entry : current_ref_params ) {
+        std::string msg = status_msg_format;
+        msg = std::regex_replace(msg, std::regex("_paramname_"), entry.first);
+        msg = std::regex_replace(msg, std::regex("_paramtype_"), stdparams_ptype[entry.first]);
+        msg = std::regex_replace(msg, std::regex("_paramvalue_"), entry.second);
+
+        cbor status_msg(msg);
+        BOOST_LOG_SEV(lg, info) << "Sending referenced status params to RB : [" << msg << "]";
+
+        // Write to STDOUT in CBOR format.
+        status_msg.write(std::cout);
     }
 }
 
@@ -427,7 +480,7 @@ void Driver :: Start (void) {
 
     // Send the status of all the device parameters to RB
     bool all_params = true;
-    SendStatus(all_params);
+    SendDeviceStatus(all_params);
 
     while(1) {
 
@@ -443,7 +496,12 @@ void Driver :: Start (void) {
         SendHTTPRequest(rb_msg);
 
         all_params = false;
-        SendStatus(false);
+
+        // Send the status of the updated device parameters to RB
+        SendDeviceStatus(false);
+
+        // Send the status of the updated referenced parameters to RB
+        SendRefStatus();
     }
 }
 

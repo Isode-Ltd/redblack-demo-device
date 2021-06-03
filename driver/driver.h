@@ -43,26 +43,26 @@ class Driver {
 
     private:
     /* Store the device information */
-    std::string device_host;                  // device host
-    std::string device_port;                  // device port
-    std::string device_name;                  // device name
-    std::string device_type;                  // device type
-    std::string device_family;                // device family
+    std::string device_host;                  // Device host
+    std::string device_port;                  // Device port
+    std::string device_name;                  // Device name
+    std::string device_type;                  // Device type
+    std::string device_family;                // Device family
 
-    std::map<std::string, std::string> status_params_val; // device_status_params_value
-    std::set<std::string> ref_status_params;  // reference status_params
+    std::map<std::string, std::string> status_params_val; // Map to store device status param and its value
+    std::map<std::string, std::string> ref_params_val;    // Map to store referenced status param and its value
 
-    std::set<std::string> control_params;     // device_control_params
-    std::set<std::string> ref_control_params; // reference control_params
+    std::map<std::string, std::string> param_ptype;       // Map to store device param namd and its type
+    std::map<std::string, std::string> stdparams_ptype;   // Map to store standard param name and its type
 
-    std::map<std::string, std::string> param_ptype;       // param type ex: Integer, String, Boolean, DateTime
-    std::map<std::string, std::string> stdparams_ptype;   // standard params : param type
+    std::set<std::string> control_params;     // Set to store the device control params
+    std::set<std::string> ref_control_params; // Set to store the referenced control_params
 
-    std::set<std::string> ptype;              // param type
-    std::string status_msg_format;            // generic format of a status message
+    std::set<std::string> ptype;              // Set to store the parameter type
+    std::string status_msg_format;            // Generic format of the status message to be sent to RB server
 
     boost::asio::io_context ioc;              // io_context is required for all I/O
-    int version;
+    int version;                              // HTTP protocol version for sending GET / POST to web device.
 
     public:
 
@@ -79,8 +79,11 @@ class Driver {
     // Initialize driver logging.
     void InitLogging(void);
 
-    // Send the device status to RB.
-    void SendStatus(bool send_all);
+    // Send the device status params to RB.
+    void SendDeviceStatus(bool send_all);
+
+    // Send the referenced status to RB.
+    void SendRefStatus(void);
 
     // Send an HTTP Request ( Get / Post ) to the rb devices based on message received from 
     // the red-black server.

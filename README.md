@@ -32,8 +32,14 @@ Browser URL : http://localhost:8080/view/radio
 Example:
 ```bash
 
+$ curl -X GET "http://localhost:8080/device/radio/ref"
+{"Alert":"INFO","DeviceTypeHash":"#ABCDE","RunningSince":"1m11.795971925s","StartTime":"2021-06-03 17:34:40","Status":"Enabled","UniqueId":"1232","Version":"1.0"}
+
+$ curl -X GET "http://localhost:8080/device/radio/status"
+{"PowerSupplyConsumption":"300","PowerSupplyVoltage":"20","SignalLevel":"500","Temperature":"40","VSWR":"10"}
+
 $ curl -X GET "http://localhost:8080/device/radio"
-{"device":"radio","vswr":"1","powersupplyvoltage":"2","powersupplyconsumption":"3","temperature":"4","signallevel":"5"}
+{"VSWR":"10","PowerSupplyVoltage":"20","PowerSupplyConsumption":"300","Temperature":"40","SignalLevel":"500","Frequency":"11015","TransmissionPower":"7528","Modem":"","Antenna":"","DeviceType":"radio","Status":"Enabled","StartTime":"2021-06-03 17:34:40","RunningSince":"1m34.998094147s","Version":"1.0","Alert":"INFO","DeviceTypeHash":"#ABCDE","UniqueId":"1232","DeviceDescription":""}
 
 $ curl -X GET "http://localhost:8080/device/radio/param/signallevel"
 "5"

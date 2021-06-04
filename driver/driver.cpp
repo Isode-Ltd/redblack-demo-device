@@ -353,6 +353,7 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
             if ( response == "SUCCESS" ) {
                 msg = std::regex_replace(msg, std::regex("Status"), "Control");
                 // Write to STDOUT in CBOR format.
+                msg += "\n";
                 cbor status_msg(msg);
                 BOOST_LOG_SEV(lg, info) << "Sending status messages : [" << msg << "]";
                 status_msg.write(std::cout);
@@ -368,7 +369,7 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
                     msg = std::regex_replace(msg, std::regex("_paramname_"), entry.first);
                     msg = std::regex_replace(msg, std::regex("_paramtype_"), param_ptype[entry.first]);
                     msg = std::regex_replace(msg, std::regex("_paramvalue_"), entry.second);
-
+                    msg += "\n";
                     cbor status_msg(msg);
                     BOOST_LOG_SEV(lg, info) << "Sending status and control params to RB : [" << msg << "]";
 
@@ -420,6 +421,11 @@ void Driver :: SendDeviceStatus (bool send_all_param) {
         msg = std::regex_replace(msg, std::regex("_paramtype_"), param_ptype[entry.first]);
         msg = std::regex_replace(msg, std::regex("_paramvalue_"), entry.second);
 
+        // Update the in memory device status params after all the device status params are sent.
+        if ( send_all_param )
+            status_params_val[entry.first] = entry.second;
+
+        // Create a CBOR status message before sending it to STDOUT
         cbor status_msg(msg);
         BOOST_LOG_SEV(lg, info) << "Sending device status params to RB : [" << msg << "]";
 

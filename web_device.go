@@ -215,7 +215,7 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 
 	// Set the default values for device control params.
 	if val_Frequency == "" {
-		val_VSWR = "12000"
+		val_Frequency = "12000"
 	}
 	if val_TransmissionPower == "" {
 		val_TransmissionPower = "10000"

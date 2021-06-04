@@ -394,7 +394,7 @@ func SetControlParam(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	// Create a map of string to arbitary data type
 	var control_params map[string]string
 	req_body, _ := ioutil.ReadAll(r.Body)
-	fmt.Println("=============== Message from driver ===================")
+	fmt.Println("\n=============== Message from driver ===================")
 	fmt.Println(r.Body)
 	fmt.Println(string(req_body))
 	fmt.Println("================= End of Message ====================")

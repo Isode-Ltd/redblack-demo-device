@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <cctype>
 #include <map>
+#include <chrono>
+#include <ctime>
 
 // Device schema parsing
 #include <boost/property_tree/ptree.hpp>
@@ -64,6 +66,8 @@ class Driver {
     boost::asio::io_context ioc;              // io_context is required for all I/O
     int version;                              // HTTP protocol version for sending GET / POST to web device.
 
+    unsigned int MONITOR_TIME;                  // Time in seconds to monitor the device status params and referenced
+                                              // status params
     public:
 
     Driver(std::string device_host, std::string device_port, std::string device_name);

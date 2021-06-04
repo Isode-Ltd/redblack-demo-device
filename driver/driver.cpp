@@ -19,6 +19,8 @@ Driver :: Driver(std::string dev_host, std::string dev_port, std::string dev_nam
     device_host(dev_host),
     device_port(dev_port),
     device_name(dev_name) {
+
+        MONITOR_TIME = 30;
         // HTTP version
         version = 11;
         std::string param_types [] = {"Integer", "String", "Boolean",
@@ -117,7 +119,6 @@ void Driver :: Load (const std::string &file_device_schema, const std::string &f
     // as no value could be fetched at this stage.
     for (auto& v : device_tree.get_child("AbstractDeviceSpecification.ReferencedStatusParameters")) {
          ref_params_val.insert(std::pair<std::string, std::string>(v.second.data(),""));
-         std::cout << v.second.data() << std::endl;
     }
 
     pt::ptree stdparams_tree;
@@ -187,7 +188,7 @@ std :: string Driver :: HTTPGet (const std::string& target, std::map<std::string
         http::read(stream, buffer, res);
 
         // Write the message to standard out
-        std::cout << res << std::endl;
+        // std::cout << res << std::endl;
 
         // Gracefully close the socket
         beast::error_code ec;
@@ -284,7 +285,7 @@ std :: string Driver :: HTTPPost (const std::string& target,
         http::read(stream, buffer, res);
 
         // Write the message to standard out
-        std::cout << res << std::endl;
+        // std::cout << res << std::endl;
 
         // Gracefully close the socket
         beast::error_code ec;
@@ -482,14 +483,14 @@ void Driver :: Start (void) {
     bool all_params = true;
     SendDeviceStatus(all_params);
 
+    auto start = std::chrono::system_clock::now();
+
     while(1) {
 
         BOOST_LOG_SEV(lg, info) << "Waiting to receive data...";
 
-        item.read (std::cin);
-        std::string received_str = cbor :: debug (item);
-
         std::ostringstream obj;
+        item.read (std::cin);
 
         item.write(obj);
         std::string rb_msg = obj.str();
@@ -497,11 +498,22 @@ void Driver :: Start (void) {
 
         all_params = false;
 
-        // Send the status of the updated device parameters to RB
-        SendDeviceStatus(false);
+        auto end = std::chrono::system_clock::now();
 
-        // Send the status of the updated referenced parameters to RB
-        SendRefStatus();
+        std::chrono::duration<double> elapsed_seconds = end - start;
+
+        // Elapsed time it greater than monitor time. Get the Device Status Params and
+        // Referenced Status Params from the device and send the same to RB.
+
+        if ( int(elapsed_seconds.count()) > MONITOR_TIME ) {
+            BOOST_LOG_SEV(lg, info) << "Time elapsed since last monitor is [" << int(elapsed_seconds.count()) << "] seconds";
+            // Send the status of the updated device parameters to RB
+            SendDeviceStatus(false);
+
+            // Send the status of the updated referenced parameters to RB
+            SendRefStatus();
+            start = std::chrono::system_clock::now();
+        }
     }
 }
 

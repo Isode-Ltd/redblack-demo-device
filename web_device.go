@@ -196,6 +196,54 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 		}
 	}
 
+	// Set the default values for device status params.
+	if val_VSWR == "" {
+		val_VSWR = "50"
+	}
+	if val_PowerSupplyVoltage == "" {
+		val_PowerSupplyVoltage = "200"
+	}
+	if val_PowerSupplyConsumption == "" {
+		val_PowerSupplyConsumption = "50000"
+	}
+	if val_Temperature == "" {
+		val_Temperature = "100"
+	}
+	if val_SignalLevel == "" {
+		val_SignalLevel = "5"
+	}
+
+	// Set the default values for device control params.
+	if val_Frequency == "" {
+		val_VSWR = "12000"
+	}
+	if val_TransmissionPower == "" {
+		val_TransmissionPower = "10000"
+	}
+	if val_Modem == "" {
+		val_Modem = "Audio"
+	}
+	if val_Antenna == "" {
+		val_Antenna = "RF"
+	}
+
+	// Set the default values for referenced status params.
+	if val_DeviceTypeHash == "" {
+		val_DeviceTypeHash = "#ISODERADIO"
+	}
+	if val_UniqueID == "" {
+		val_UniqueID = "SAMPLE_RADIO_1"
+	}
+	if val_Version == "" {
+		val_Version = "1.0"
+	}
+	if val_Status == "" {
+		val_Status = "RUNNING"
+	}
+	if val_Alert == "" {
+		val_Alert = "INFO"
+	}
+
 	return &Device{DeviceType: devicetype, VSWR: val_VSWR, PowerSupplyVoltage: val_PowerSupplyVoltage,
 		PowerSupplyConsumption: val_PowerSupplyConsumption, Temperature: val_Temperature,
 		SignalLevel: val_SignalLevel, Frequency: val_Frequency,
@@ -390,9 +438,9 @@ func SetControlParam(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 }
 
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	fmt.Fprint(w, "Welcome!\n")
-	fmt.Fprint(w, "For viewing device parameters : http://localhost:8080/view/radio")
-	fmt.Fprint(w, "For updating device parameters : http://localhost:8080/edit/radio")
+	fmt.Fprint(w, "Welcome !\n\n")
+	fmt.Fprint(w, "For viewing device parameters : http://localhost:8080/view/radio\n\n")
+	fmt.Fprint(w, "For updating device parameters : http://localhost:8080/edit/radio\n\n")
 }
 
 var start_time_ = time.Now()

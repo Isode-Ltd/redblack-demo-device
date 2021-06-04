@@ -9,6 +9,13 @@
     box-sizing: border-box;
   }
 
+  body
+  {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    color: #444444;
+    font-size: 13pt;
+    background-color: #FAFAFA;
+  }
   .button {
         background-color: #008CBA; /* Green */
         border: none;
@@ -71,7 +78,7 @@
   }
 </style>
 
-<h2>Device [{{.DeviceType}}]</h2>
+<h3>Device [{{.DeviceType}}]</h3>
 
 <div class="row">
   <div class="column">
@@ -81,23 +88,23 @@
           <th>Value</th>
         </tr>
         <tr>
-          <td>Voltage Standing Wave Ratio</td>
+          <td><b>Voltage Standing Wave Ratio</b> ( 10 - 100 )</td>
           <td>{{printf "%s" .VSWR}}</td>
         </tr>
         <tr>
-          <td>Power Supply Voltage</td>
+          <td><b>Power Supply Voltage</b> ( 100 - 400 )</td>
           <td>{{printf "%s" .PowerSupplyVoltage}}</td>
         </tr>
         <tr>
-          <td>Power Supply Consumption</td>
+          <td><b>Power Supply Consumption</b> ( 1 - 100000 )</td>
           <td>{{printf "%s" .PowerSupplyConsumption}}</td>
         </tr>
         <tr>
-          <td>Temperature of Radio</td>
+          <td><b>Temperature of Radio</b> [ -20 - (+200) ] </td>
           <td>{{printf "%s" .Temperature}}</td>
         </tr>
         <tr>
-          <td>Signal Level</td>
+          <td><b>Signal Level</b> [ (-40) - (+15) ]</td>
           <td>{{printf "%s" .SignalLevel}}</td>
         </tr>
     </table>
@@ -108,35 +115,35 @@
           <th>Value</th>
         </tr>
         <tr>
-          <td>Device Type</td>
+          <td><b>Device Type</b></td>
           <td>{{printf "%s" .DeviceType}}</td>
         </tr>
         <tr>
-          <td>Device Type Hash</td>
+          <td><b>Device Type Hash</b></td>
           <td>{{printf "%s" .DeviceTypeHash}}</td>
         </tr>
         <tr>
-          <td>Unique ID</td>
+          <td><b>Unique ID</b></td>
           <td>{{printf "%s" .UniqueID}}</td>
         </tr>
         <tr>
-          <td>Version</td>
+          <td><b>Version</b></td>
           <td>{{printf "%s" .Version}}</td>
         </tr>
         <tr>
-          <td>Status</td>
+          <td><b>Status</b></td>
           <td>{{printf "%s" .Status}}</td>
         </tr>
         <tr>
-          <td>Start Time</td>
+          <td><b>Start Time</b></td>
           <td>{{printf "%s" .StartTime}}</td>
         </tr>
         <tr>
-          <td>Running Since</td>
+          <td><b>Running Since</b></td>
           <td>{{printf "%s" .RunningSince}}</td>
         </tr>
         <tr>
-          <td>Alert</td>
+          <td><b>Alert</b></td>
           <td>{{printf "%s" .Alert}}</td>
         </tr>
     </table>
@@ -152,19 +159,19 @@
         <th>Value</th>
       </tr>
       <tr>
-        <td>Frequency</td>
+        <td><b>Frequency</b> ( 3000 - 30000 )</td>
         <td>{{printf "%s" .Frequency}}</td>
       </tr>
       <tr>
-        <td>Transmission Power</td>
+        <td><b>Transmission Power</b> ( 1 - 20000 )</td>
         <td>{{printf "%s" .TransmissionPower}}</td>
       </tr>
       <tr>
-        <td>Modem</td>
+        <td><b>Modem</b></td>
         <td>{{printf "%s" .Modem}}</td>
       </tr>
       <tr>
-        <td>Antenna</td>
+        <td><b>Antenna</b></td>
         <td>{{printf "%s" .Antenna}}</td>
       </tr>
     </table>

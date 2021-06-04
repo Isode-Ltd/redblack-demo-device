@@ -112,14 +112,15 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 	defer status_file.Close()
 
 	scanner := bufio.NewScanner(status_file)
+
 	var line string
 	var val_VSWR, val_PowerSupplyVoltage, val_PowerSupplyConsumption string
 	var val_Temperature, val_SignalLevel string
 	var val_Status, val_StartTime, val_RunningSince string
 	var val_Version, val_Alert, val_UniqueID, val_DeviceTypeHash string
-	val_StartTime = start_time_
-	//var current_time_:= time.Now().Format("2006-01-02 15:04:05")
-	val_RunningSince = time.Now().Sub(t1).String()
+
+	val_StartTime = start_time_.Format("2006-01-02 15:04:05")
+	val_RunningSince = time.Now().Sub(start_time_).String()
 
 	for scanner.Scan() {
 		line = scanner.Text()
@@ -390,10 +391,11 @@ func SetControlParam(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Fprint(w, "Welcome!\n")
+	fmt.Fprint(w, "For viewing device parameters : http://localhost:8080/view/radio")
+	fmt.Fprint(w, "For updating device parameters : http://localhost:8080/edit/radio")
 }
 
-var start_time_ = time.Now().Format("2006-01-02 15:04:05")
-var t1 = time.Now()
+var start_time_ = time.Now()
 
 func main() {
 	router := httprouter.New()

@@ -5,29 +5,18 @@
 </head>
 
 <style>
-    table {
-      width:50%;
-    }
-    table, th, td {
-      border: 1px solid black;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 15px;
-      text-align: left;
-    }
-    #tab-alt tr:nth-child(even) {
-      background-color: #eee;
-    }
-    #tab-alt tr:nth-child(odd) {
-     background-color: #fff;
-    }
-    #tab-alt th {
-      background-color: black;
-      color: white;
-    }
+      * {
+    box-sizing: border-box;
+  }
 
-    .button {
+  body
+  {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    color: #444444;
+    font-size: 13pt;
+    background-color: #FAFAFA;
+  }
+  .button {
         background-color: #008CBA; /* Green */
         border: none;
         color: white;
@@ -38,76 +27,128 @@
         font-size: 16px;
         margin: 4px 2px;
         cursor: pointer;
-    }
+  }
+
+  .row {
+    margin-left:-5px;
+    margin-right:-5px;
+  }
+
+  .column {
+    float: left;
+    width: 50%;
+    padding: 5px;
+  }
+
+  /* Clearfix (clear floats) */
+  .row::after {
+    content: "";
+    clear: both;
+    display: table;
+  }
+
+  table {
+    border-collapse: collapse;
+    border-spacing: 2;
+    width: 95%;
+    border: 1px solid #ddd;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 16px;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  tr:nth-child(odd) {
+    background-color: white;
+  }
+  #tab-alt th {
+      background-color: black;
+      color: white;
+  }
+  #tab-alt tr:nth-child(even) {
+      background-color: #eee;
+  }
+
+  #tab-alt tr:nth-child(odd) {
+     background-color: white;
+  }
 </style>
 
 <body>
-<h2>Set parameters for the device [{{.DeviceType}}]</h2>
+<h3>Update parameters for the device [{{.DeviceType}}]</h3>
 
 <form action="/save/{{.DeviceType}}" method="GET">
-    <table id="tab-alt">
-        <tr>
-            <th>Device Status Parameter</th>
-            <th>Value</th>
-        </tr>
-        <tr>
-            <td>Voltage Standing Wave Ratio</td>
-            <td><textarea name="VSWR" rows="2" cols="20">{{printf "%s" .VSWR}}</textarea></td>
-        </tr>
-        <tr>
-            <td>Power Supply Voltage</td>
-            <td><textarea name="PowerSupplyVoltage" rows="2" cols="20">{{printf "%s" .PowerSupplyVoltage}}</textarea></td>
-        </tr>
-        <tr>
-            <td>Power Supply Consumption</td>
-            <td><textarea name="PowerSupplyConsumption" rows="2" cols="20">{{printf "%s" .PowerSupplyConsumption}}</textarea></td>
-        </tr>
-        <tr>
-            <td>Temperature of Radio</td>
-            <td><textarea name="Temperature" rows="2" cols="20">{{printf "%s" .Temperature}}</textarea></td>
-        </tr>
-        <tr>
-            <td>Signal Level</td>
-            <td><textarea name="SignalLevel" rows="2" cols="20">{{printf "%s" .SignalLevel}}</textarea></td>
-        </tr>
-    </table>
-    <br>
-    <table id="tab-alt">
-        <tr>
-            <th>Reference Parameter</th>
-            <th>Value</th>
-        </tr>
-        <tr>
-            <td>Devie Type Hash</td>
-            <td><textarea name="DeviceTypeHash" rows="2" cols="20">{{printf "%s" .DeviceTypeHash}}</textarea></td>
-        </tr>
-        <tr>
-            <td>Unique ID</td>
-            <td><textarea name="UniqueID" rows="2" cols="20">{{printf "%s" .UniqueID}}</textarea></td>
-        </tr>
-        <tr>
-            <td>Version</td>
-            <td><textarea name="Version" rows="2" cols="20">{{printf "%s" .Version}}</textarea></td>
-        </tr>
-        <tr>
-            <td>Status</td>
-            <td><textarea name="Status" rows="2" cols="20">{{printf "%s" .Status}}</textarea></td>
-        </tr>
-        <tr>
-            <td>Start Time</td>
-            <td><textarea name="StartTime" rows="2" cols="20" readonly>{{printf "%s" .StartTime}}</textarea></td>
-        </tr>
-        <tr>
-            <td>Running Since</td>
-            <td><textarea name="RunningSince" rows="2" cols="20" readonly>{{printf "%s" .RunningSince}}</textarea></td>
-        </tr>
-        <tr>
-            <td>Alert</td>
-            <td><textarea name="Alert" rows="2" cols="20">{{printf "%s" .Alert}}</textarea></td>
-        </tr>
-    </table>
-    <div><input class="button" type="submit" value="Save"></div>
-
+    <div class="row">
+        <div class="column">
+            <table id="tab-alt">
+                <tr>
+                    <th>Device Status Parameter</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td><b>Voltage Standing Wave Ratio</b> ( 10 - 100 )</td>
+                    <td><textarea name="VSWR" rows="2" cols="20">{{printf "%s" .VSWR}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Power Supply Voltage</b> ( 100 - 400 )</td>
+                    <td><textarea name="PowerSupplyVoltage" rows="2" cols="20">{{printf "%s" .PowerSupplyVoltage}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Power Supply Consumption</b> ( 1 - 100000 )</td>
+                    <td><textarea name="PowerSupplyConsumption" rows="2" cols="20">{{printf "%s" .PowerSupplyConsumption}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Temperature of Radio</b> [ -20 - (+200) ] </td>
+                    <td><textarea name="Temperature" rows="2" cols="20">{{printf "%s" .Temperature}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Signal Level</b> [ (-40) - (+15) ]</td>
+                    <td><textarea name="SignalLevel" rows="2" cols="20">{{printf "%s" .SignalLevel}}</textarea></td>
+                </tr>
+            </table>
+        </div>
+        <div class="column">
+            <table id="tab-alt">
+                <tr>
+                    <th><b>Reference Parameter</b></th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td><b>Devie Type Hash</b></td>
+                    <td><textarea name="DeviceTypeHash" rows="2" cols="20">{{printf "%s" .DeviceTypeHash}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Unique ID</b></td>
+                    <td><textarea name="UniqueID" rows="2" cols="20">{{printf "%s" .UniqueID}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Version</b></td>
+                    <td><textarea name="Version" rows="2" cols="20">{{printf "%s" .Version}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Status</b></td>
+                    <td><textarea name="Status" rows="2" cols="20">{{printf "%s" .Status}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Start Time</b></td>
+                    <td><textarea name="StartTime" rows="2" cols="20" readonly>{{printf "%s" .StartTime}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Running Since</b></td>
+                    <td><textarea name="RunningSince" rows="2" cols="20" readonly>{{printf "%s" .RunningSince}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Alert</b></td>
+                    <td><textarea name="Alert" rows="2" cols="20">{{printf "%s" .Alert}}</textarea></td>
+                </tr>
+            </table>
+        </div>
+        <div><input class="button" type="submit" value="Save"></div>
+    </div>
 </form>
 </body>
 </html>

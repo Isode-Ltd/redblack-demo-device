@@ -45,43 +45,42 @@ class Driver {
 
     private:
     /* Store the device information */
-    std::string device_host;                  // Device host
-    std::string device_port;                  // Device port
-    std::string device_name;                  // Device name
-    std::string device_type;                  // Device type
-    std::string device_family;                // Device family
+    std::string device_type;       // Device type
+    std::string device_family;     // Device family
+    std::string device_name;       // Device name
+    std::string schema_file;       // Device schema file
+    std::string std_params_file;   // Device standard parameters file
 
-    std::map<std::string, std::string> status_params_val; // Map to store device status param and its value
-    std::map<std::string, std::string> ref_params_val;    // Map to store referenced status param and its value
+    std::map<std::string, std::string> control_param_val;  // Map to store device status param and its value
+    std::map<std::string, std::string> status_param_val;   // Map to store device status param and its value
+    std::map<std::string, std::string> ref_param_val;      // Map to store referenced status param and its value
 
-    std::map<std::string, std::string> param_ptype;       // Map to store device param namd and its type
-    std::map<std::string, std::string> stdparams_ptype;   // Map to store standard param name and its type
-
-    std::set<std::string> control_params;     // Set to store the device control params
-    std::set<std::string> ref_control_params; // Set to store the referenced control_params
+    std::map<std::string, std::string> control_param_type; // Map to store device control param and its type
+    std::map<std::string, std::string> status_param_type;  // Map to store device status param and its type
+    std::map<std::string, std::string> std_param_type;    // Map to store standard param name and its type
 
     std::set<std::string> ptype;              // Set to store the parameter type
     std::string status_msg_format;            // Generic format of the status message to be sent to RB server
 
-    boost::asio::io_context ioc;              // io_context is required for all I/O
-    int version;                              // HTTP protocol version for sending GET / POST to web device.
-
-    unsigned int MONITOR_TIME;                  // Time in seconds to monitor the device status params and referenced
-                                              // status params
     public:
 
-    Driver(std::string device_host, std::string device_port, std::string device_name);
+    Driver(std::string dev_name, std::string schema_file, std::string std_params_file);
 
     ~Driver();
 
-    // Parse the XML device schema and store the device status & control params.
-    void Load(const std::string& file_device_schema, const std::string& file_stdparams);
-
-    // Run the driver program.
-    void Start(void);
+    std::string GetDeviceName(void);
+    std::string GetStatusMsgFormat(void);
 
     // Initialize driver logging.
     void InitLogging(void);
+
+    // This functions parses the message received from RB server and saves the param category, name, type
+    // and value in the passed arguments.
+    void GetParamDetails(const std::string& rb_msg, std::string& param_category,
+                     std::string& param_name, std::string& param_type, std::string& param_value);
+
+    // Parse the XML device schema and store the device status & control params.
+    void Load();
 
     // Send the device status params to RB.
     void SendDeviceStatus(std::map<std::string, std::string>& current_dev_status, bool send_all_param);
@@ -89,9 +88,33 @@ class Driver {
     // Send the referenced status to RB.
     void SendRefStatus(std::map<std::string, std::string>& current_ref_params, bool send_all_param);
 
+};
+
+class IsodeRadioDriver : public Driver {
+
+    private:
+    std::string device_host;       // Device host
+    std::string device_port;       // Device port
+
+    boost::asio::io_context ioc;   // io_context is required for all I/O
+    int version;                   // HTTP protocol version for sending GET / POST to web device.
+
+    unsigned int MONITOR_TIME;     // Time in seconds to monitor the device status params and referenced status params
+
+    public:
+
+    IsodeRadioDriver(std::string device_host, std::string device_port, std::string device_name,
+                     std::string schema_file, std::string std_params_file);
+
+    // Run the driver program.
+    void Start(void);
+
+    // Send the message received from the RB to the device.
+    void SendMsgToDevice(const std::string& rb_msg);
+
+    // Report status of the device back to RB.
     void ReportStatusToRB(bool all_params_flag);
 
-    void SendMsgToDevice(const std::string& rb_msg);
     // Send an HTTP Request ( Get / Post ) to the rb devices based on message received from 
     // the red-black server.
     void SendHTTPRequest(const std::string& rb_msg);
@@ -101,10 +124,4 @@ class Driver {
 
     // Send HTTP Post request to the rb device to modify device control parameters.
     std::string HTTPPost(const std::string& target_device, const std::string& param, const std::string& value);
-
-};
-
-class IsodeRadioDriver : public Driver {
-
-    public:
 };

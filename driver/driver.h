@@ -84,11 +84,14 @@ class Driver {
     void InitLogging(void);
 
     // Send the device status params to RB.
-    void SendDeviceStatus(bool send_all);
+    void SendDeviceStatus(std::map<std::string, std::string>& current_dev_status, bool send_all_param);
 
     // Send the referenced status to RB.
-    void SendRefStatus(void);
+    void SendRefStatus(std::map<std::string, std::string>& current_ref_params, bool send_all_param);
 
+    void ReportStatusToRB(bool all_params_flag);
+
+    void SendMsgToDevice(const std::string& rb_msg);
     // Send an HTTP Request ( Get / Post ) to the rb devices based on message received from 
     // the red-black server.
     void SendHTTPRequest(const std::string& rb_msg);

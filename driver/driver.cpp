@@ -384,17 +384,11 @@ void Driver :: SendHTTPRequest (const std::string& rb_msg) {
 // SendDeviceStatus function would send the status of all the device status params to RB server
 // if send_all_param is set to true. If it is set to false, it would only send the status
 // of the updated device status params.
-void Driver :: SendDeviceStatus (bool send_all_param) {
+void Driver :: SendDeviceStatus ( std::map<std::string, std::string>& current_dev_status,
+                                  bool send_all_param ) {
 
     using namespace logging::trivial;
     src::severity_logger<severity_level> lg;
-
-    std :: string target("/device/" + device_name + "/status");
-    std :: map<std::string, std::string> current_dev_status;
-    std :: string response = HTTPGet(target, current_dev_status);
-
-    if ( response != "SUCCESS" )
-        return;
 
     // If only updated device status params are to be sent,
     // keep only the updated entries and remove the rest.
@@ -409,6 +403,7 @@ void Driver :: SendDeviceStatus (bool send_all_param) {
                 if ( current_dev_status[entry.first] == entry.second ) {
                     current_dev_status.erase(it);
                 } else {
+                    // Update the in memory status_params_val
                     status_params_val[entry.first] = current_dev_status[entry.first];
                 }
             }
@@ -422,6 +417,8 @@ void Driver :: SendDeviceStatus (bool send_all_param) {
         msg = std::regex_replace(msg, std::regex("_paramvalue_"), entry.second);
 
         // Update the in memory device status params after all the device status params are sent.
+        // When only the updated params are to be sent back the status_params_val map gets updated
+        // in the above if block.
         if ( send_all_param )
             status_params_val[entry.first] = entry.second;
 
@@ -435,32 +432,28 @@ void Driver :: SendDeviceStatus (bool send_all_param) {
 }
 
 // SendRefStatus function would send the reference status params of the device to the RB server
-void Driver :: SendRefStatus () {
+void Driver :: SendRefStatus ( std::map<std::string, std::string>& current_ref_params,
+                               bool send_all_param ) {
 
     using namespace logging::trivial;
     src::severity_logger<severity_level> lg;
 
-    std :: string target("/device/" + device_name + "/ref");
-    std :: map<std::string, std::string> current_ref_params;
-    std :: string response = HTTPGet(target, current_ref_params);
-
-    if ( response != "SUCCESS" )
-        return;
-
     // If only updated referenced params are to be sent,
     // keep just the updated entries and remove the rest.
     // Also update the current referenced status.
-
-    for ( const auto& entry : ref_params_val ) {
-        std::map<std::string, std::string>::iterator it;
-        it = current_ref_params.find(entry.first);
-        if ( it != current_ref_params.end() ) {
-            // This referenced status param value has not been updated,
-            // hence remove it.
-            if ( current_ref_params[entry.first] == entry.second ) {
-                current_ref_params.erase(it);
-            } else {
-                ref_params_val[entry.first] = current_ref_params[entry.first];
+    if ( send_all_param == false ) {
+        for ( const auto& entry : ref_params_val ) {
+            std::map<std::string, std::string>::iterator it;
+            it = current_ref_params.find(entry.first);
+            if ( it != current_ref_params.end() ) {
+                // This referenced status param value has not been updated,
+                // hence remove it.
+                if ( current_ref_params[entry.first] == entry.second ) {
+                    current_ref_params.erase(it);
+                } else {
+                    // Update the in memory ref_params_val
+                    ref_params_val[entry.first] = current_ref_params[entry.first];
+                }
             }
         }
     }
@@ -471,6 +464,12 @@ void Driver :: SendRefStatus () {
         msg = std::regex_replace(msg, std::regex("_paramtype_"), stdparams_ptype[entry.first]);
         msg = std::regex_replace(msg, std::regex("_paramvalue_"), entry.second);
 
+        // Update the in memory device status params after all the device status params are sent.
+        // When only the updated params are to be sent back the ref_params_val map gets updated
+        // in the above if block.
+        if ( send_all_param )
+            ref_params_val[entry.first] = entry.second;
+
         cbor status_msg(msg);
         BOOST_LOG_SEV(lg, info) << "Sending referenced status params to RB : [" << msg << "]";
 
@@ -479,15 +478,43 @@ void Driver :: SendRefStatus () {
     }
 }
 
+void Driver :: ReportStatusToRB (bool all_params_flag) {
+
+    // Fetch the current device status params
+    std :: string target("/device/" + device_name + "/status");
+    std :: map<std::string, std::string> current_dev_status;
+    std :: string response = HTTPGet(target, current_dev_status);
+
+    if ( response == "SUCCESS" ) {
+        // Send the status of the device parameters to RB
+        SendDeviceStatus(current_dev_status, all_params_flag);
+    }
+
+    // Fetch the current referenced status params
+    target = "/device/" + device_name + "/ref";
+    std :: map<std::string, std::string> current_ref_params;
+    response = HTTPGet(target, current_ref_params);
+
+    if ( response == "SUCCESS" ) {
+        // Send the status of the referenced parameters to RB
+        SendRefStatus(current_ref_params, all_params_flag);
+    }
+}
+
+void Driver :: SendMsgToDevice (const std::string& rb_msg) {
+    SendHTTPRequest(rb_msg);
+}
+
 void Driver :: Start (void) {
 
     cbor item;
     using namespace logging::trivial;
     src::severity_logger<severity_level> lg;
 
-    // Send the status of all the device parameters to RB
-    bool all_params = true;
-    SendDeviceStatus(all_params);
+    bool all_params_flag = true;
+
+    // Report initial status of the device params to the RB server.
+    ReportStatusToRB(all_params_flag);
 
     auto start = std::chrono::system_clock::now();
 
@@ -500,9 +527,7 @@ void Driver :: Start (void) {
 
         item.write(obj);
         std::string rb_msg = obj.str();
-        SendHTTPRequest(rb_msg);
-
-        all_params = false;
+        SendMsgToDevice(rb_msg);
 
         auto end = std::chrono::system_clock::now();
 
@@ -513,11 +538,8 @@ void Driver :: Start (void) {
 
         if ( int(elapsed_seconds.count()) > MONITOR_TIME ) {
             BOOST_LOG_SEV(lg, info) << "Time elapsed since last monitor is [" << int(elapsed_seconds.count()) << "] seconds";
-            // Send the status of the updated device parameters to RB
-            SendDeviceStatus(false);
-
-            // Send the status of the updated referenced parameters to RB
-            SendRefStatus();
+            all_params_flag = false;
+            ReportStatusToRB(all_params_flag);
             start = std::chrono::system_clock::now();
         }
     }

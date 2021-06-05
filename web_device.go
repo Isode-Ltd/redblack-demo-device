@@ -417,16 +417,16 @@ func SetControlParam(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	check(err)
 	defer f.Close()
 
-	if val, ok := control_params["frequency"]; ok {
+	if val, ok := control_params["Frequency"]; ok {
 		val_Frequency = val
 	}
-	if val, ok := control_params["transmissionpower"]; ok {
+	if val, ok := control_params["TransmissionPower"]; ok {
 		val_TransmissionPower = val
 	}
-	if val, ok := control_params["modem"]; ok {
+	if val, ok := control_params["Modem"]; ok {
 		val_Modem = val
 	}
-	if val, ok := control_params["antenna"]; ok {
+	if val, ok := control_params["Antenna"]; ok {
 		val_Antenna = val
 	}
 

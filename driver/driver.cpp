@@ -59,7 +59,7 @@ void Driver :: GetParamDetails (const std::string& rb_msg,
     */
 
     // Replace "Status" with "Control" case sensitive in the below block.
-    std :: regex param_regex("<.*<Param>(.*)</Param>(.*)</Status>");
+    std :: regex param_regex("<.*<Param>(.*)</Param>(.*)</Control>");
     std :: smatch param_match;
 
     if ( std::regex_search(rb_msg, param_match, param_regex) ) {
@@ -535,6 +535,8 @@ void IsodeRadioDriver :: SendMsgToDevice (const std::string& rb_msg) {
 void IsodeRadioDriver :: Start (void) {
 
     Driver :: InitLogging();
+    using namespace logging::trivial;
+    src::severity_logger<severity_level> lg;
 
     try {
         Driver :: Load();
@@ -542,42 +544,39 @@ void IsodeRadioDriver :: Start (void) {
         std::cout << "Error: " << e.what() << "\n";
     }
 
-    cbor item;
-
     bool all_params_flag = true;
-
     // Report initial status of the device params to the RB server.
     ReportStatusToRB(all_params_flag);
-
+    // Initial status of the device has been reported, now start the monitoring timer.
     auto start = std::chrono::system_clock::now();
 
-    using namespace logging::trivial;
-    src::severity_logger<severity_level> lg;
-
-    while(1) {
-
-        BOOST_LOG_SEV(lg, info) << "Waiting to receive data...";
-
-        std::ostringstream obj;
-        item.read (std::cin);
-
-        item.write(obj);
-        std::string rb_msg = obj.str();
-        SendMsgToDevice(rb_msg);
-
-        auto end = std::chrono::system_clock::now();
-
-        std::chrono::duration<double> elapsed_seconds = end - start;
-
-        // Elapsed time it greater than monitor time. Get the Device Status Params and
-        // Referenced Status Params from the device and send the same to RB.
-
-        if ( int(elapsed_seconds.count()) > MONITOR_TIME ) {
-            BOOST_LOG_SEV(lg, info) << "Time elapsed since last monitor is [" << int(elapsed_seconds.count()) << "] seconds";
-            all_params_flag = false;
-            ReportStatusToRB(all_params_flag);
-            start = std::chrono::system_clock::now();
+    std::condition_variable cv;
+    std::mutex mutex_;
+    // thread to read CBOR from stdin and sending message to the device.
+    std::thread io ([&] {
+        while (true) {
+            BOOST_LOG_SEV(lg, info) << "Waiting to receive data...";
+            cbor item;
+            item.read (std::cin);
+            std::ostringstream obj;
+            item.write(obj);
+            std::string rb_msg = obj.str();
+            std::lock_guard<std::mutex> lock(mutex_);
+            SendMsgToDevice(rb_msg);
         }
+    });
+
+    // non-blocking thread to send the updated device status and referenced status parameters
+    // to the RB
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::seconds(MONITOR_TIME));
+        // MONITOR_TIME has expired so send a status update.
+        // Get the Device Status Params and Referenced Status Params
+        // from the device and send the same to RB.
+        std::lock_guard<std::mutex> lock_main(mutex_);
+        BOOST_LOG_SEV(lg, info) << "Monitoring device status";
+        all_params_flag = false;
+        ReportStatusToRB(all_params_flag);
     }
 }
 

@@ -11,6 +11,9 @@
 #include <map>
 #include <chrono>
 #include <ctime>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 
 // Device schema parsing
 #include <boost/property_tree/ptree.hpp>

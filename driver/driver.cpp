@@ -48,7 +48,6 @@ void Driver :: GetParamDetails (const std::string& rb_msg,
     using namespace logging::trivial;
     src::severity_logger<severity_level> lg;
 
-    BOOST_LOG_SEV(lg, info) << "Message from RB Server : [" << rb_msg << "]";
     /*  Below is the example of a control message from RB server
         <Control>
             <Device>Radio</Device>
@@ -248,12 +247,12 @@ void Driver :: SendDeviceStatus ( std::map<std::string, std::string>& current_de
         if ( send_all_param )
             status_param_val[entry.first] = entry.second;
 
+        BOOST_LOG_SEV(lg, info) << "Sending device status params to RB : [" << msg << "]";
         // Create a CBOR status message before sending it to STDOUT
         cbor status_msg(msg);
-        BOOST_LOG_SEV(lg, info) << "Sending device status params to RB : [" << msg << "]";
-
-        // Write to STDOUT in CBOR format.
-        status_msg.write(std::cout);
+        cbor :: binary data = cbor :: encode(status_msg);
+        cbor item = cbor :: tagged (24, data);
+        item.write(std::cout);
     }
 }
 
@@ -290,17 +289,19 @@ void Driver :: SendRefStatus ( std::map<std::string, std::string>& current_ref_p
         msg = std::regex_replace(msg, std::regex("_paramtype_"), std_param_type[entry.first]);
         msg = std::regex_replace(msg, std::regex("_paramvalue_"), entry.second);
 
+        BOOST_LOG_SEV(lg, info) << "Sending referenced status params to RB : [" << msg << "]";
+
         // Update the in memory device status params after all the device status params are sent.
         // When only the updated params are to be sent back the ref_params_val map gets updated
         // in the above if block.
         if ( send_all_param )
             ref_param_val[entry.first] = entry.second;
 
+        // Create a CBOR referenced status message before sending it to STDOUT
         cbor status_msg(msg);
-        BOOST_LOG_SEV(lg, info) << "Sending referenced status params to RB : [" << msg << "]";
-
-        // Write to STDOUT in CBOR format.
-        status_msg.write(std::cout);
+        cbor :: binary data = cbor :: encode(status_msg);
+        cbor item = cbor :: tagged (24, data);
+        item.write(std::cout);
     }
 }
 
@@ -310,7 +311,7 @@ IsodeRadioDriver :: IsodeRadioDriver (std::string dev_host, std::string dev_port
     device_host = dev_host;
     device_port = dev_port;
 
-    MONITOR_TIME = 30;
+    MONITOR_TIME = 60;
     // HTTP version
     version = 11;
 }
@@ -477,6 +478,9 @@ void IsodeRadioDriver :: SendHTTPRequest (const std::string& rb_msg) {
 
     using namespace logging::trivial;
     src::severity_logger<severity_level> lg;
+
+    BOOST_LOG_SEV(lg, info) << "Received message from RB : [" << rb_msg << "]";
+
     std :: string param_category("");
     std :: string param_name("");
     std :: string param_type("");
@@ -494,12 +498,16 @@ void IsodeRadioDriver :: SendHTTPRequest (const std::string& rb_msg) {
             msg = std::regex_replace(msg, std::regex("_paramname_"), param_name);
             msg = std::regex_replace(msg, std::regex("_paramtype_"), param_type);
             msg = std::regex_replace(msg, std::regex("_paramvalue_"), param_value);
-            msg = std::regex_replace(msg, std::regex("Status"), "Control");
-            // Write to STDOUT in CBOR format.
+            msg = std::regex_replace(msg, std::regex("Control"), "Status");
             msg += "\n";
-            cbor status_msg(msg);
             BOOST_LOG_SEV(lg, info) << "Sending status messages : [" << msg << "]";
-            status_msg.write(std::cout);
+            // Create a CBOR referenced status message before sending it to STDOUT
+            cbor status_msg(msg);
+            cbor :: binary data = cbor :: encode(status_msg);
+            cbor item = cbor :: tagged (24, data);
+            item.write(std::cout);
+        } else {
+            // TBD
         }
     }
 }
@@ -552,7 +560,8 @@ void IsodeRadioDriver :: Start (void) {
 
     std::condition_variable cv;
     std::mutex mutex_;
-    // thread to read CBOR from stdin and sending message to the device.
+    // thread to read msg from stdin and sending message to the device.
+
     std::thread io ([&] {
         while (true) {
             BOOST_LOG_SEV(lg, info) << "Waiting to receive data...";

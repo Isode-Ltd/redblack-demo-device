@@ -13,7 +13,7 @@
   {
     font-family: 'Helvetica', 'Arial', sans-serif;
     color: #444444;
-    font-size: 11pt;
+    font-size: 12pt;
     background-color: #FAFAFA;
   }
   .button {
@@ -123,10 +123,6 @@
           <td>{{printf "%s" .DeviceTypeHash}}</td>
         </tr>
         <tr>
-          <td><b>Device Description</b></td>
-          <td>{{printf "%s" .DeviceDescription}}</td>
-        </tr>
-        <tr>
           <td><b>Unique ID</b></td>
           <td>{{printf "%s" .UniqueID}}</td>
         </tr>
@@ -169,14 +165,6 @@
       <tr>
         <td><b>Transmission Power</b> ( 1 - 20000 )</td>
         <td>{{printf "%s" .TransmissionPower}}</td>
-      </tr>
-      <tr>
-        <td><b>Modem</b></td>
-        <td>{{printf "%s" .Modem}}</td>
-      </tr>
-      <tr>
-        <td><b>Antenna</b></td>
-        <td>{{printf "%s" .Antenna}}</td>
       </tr>
     </table>
   </div>

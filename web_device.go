@@ -27,8 +27,6 @@ type Device struct {
 	// Control parameters
 	Frequency         string `json:"Frequency"`
 	TransmissionPower string `json:"TransmissionPower"`
-	Modem             string `json:"Modem"`
-	Antenna           string `json:"Antenna"`
 
 	// Referenced status parameters
 	DeviceType     string `json:"DeviceType"`
@@ -41,7 +39,6 @@ type Device struct {
 	UniqueID       string `json:"UniqueID"`
 
 	// Referenced control parameters
-	DeviceDescription string `json:"DeviceDescription"`
 }
 
 func check(e error) {
@@ -78,7 +75,6 @@ func (p *Device) save() error {
 	Version := p.Version
 	Alert := p.Alert
 	DeviceTypeHash := p.DeviceTypeHash
-	DeviceDescription := p.DeviceDescription
 	UniqueID := p.UniqueID
 
 	f.WriteString("[DeviceType][" + DeviceType + "]\n")
@@ -88,7 +84,6 @@ func (p *Device) save() error {
 	f.WriteString("[Version][" + Version + "]\n")
 	f.WriteString("[Alert][" + Alert + "]\n")
 	f.WriteString("[DeviceTypeHash][" + DeviceTypeHash + "]\n")
-	f.WriteString("[DeviceDescription][" + DeviceDescription + "]\n")
 	f.WriteString("[UniqueID][" + UniqueID + "]\n")
 
 	f, err = os.OpenFile(p.DeviceType+".log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -119,7 +114,7 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 	var val_VSWR, val_PowerSupplyVoltage, val_PowerSupplyConsumption string
 	var val_Temperature, val_SignalLevel string
 	var val_Status, val_StartTime, val_RunningSince string
-	var val_Version, val_Alert, val_UniqueID, val_DeviceTypeHash, val_DeviceDescription string
+	var val_Version, val_Alert, val_UniqueID, val_DeviceTypeHash string
 
 	val_StartTime = start_time_.Format("2006-01-02 15:04:05")
 	val_RunningSince = time.Now().Sub(start_time_).String()
@@ -157,9 +152,6 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 			if match[1] == "DeviceTypeHash" {
 				val_DeviceTypeHash = match[2]
 			}
-			if match[1] == "DeviceDescription" {
-				val_DeviceDescription = match[2]
-			}
 			if match[1] == "UniqueID" {
 				val_UniqueID = match[2]
 			}
@@ -178,7 +170,7 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 	defer control_file.Close()
 
 	scanner = bufio.NewScanner(control_file)
-	var val_Frequency, val_TransmissionPower, val_Modem, val_Antenna string
+	var val_Frequency, val_TransmissionPower string
 
 	for scanner.Scan() {
 		line = scanner.Text()
@@ -191,12 +183,6 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 			}
 			if match[1] == "TransmissionPower" {
 				val_TransmissionPower = match[2]
-			}
-			if match[1] == "Modem" {
-				val_Modem = match[2]
-			}
-			if match[1] == "Antenna" {
-				val_Antenna = match[2]
 			}
 		}
 	}
@@ -225,19 +211,10 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 	if val_TransmissionPower == "" {
 		val_TransmissionPower = "10000"
 	}
-	if val_Modem == "" {
-		val_Modem = "Audio"
-	}
-	if val_Antenna == "" {
-		val_Antenna = "RF"
-	}
 
 	// Set the default values for referenced status params.
 	if val_DeviceTypeHash == "" {
 		val_DeviceTypeHash = "#ISODERADIO"
-	}
-	if val_DeviceDescription == "" {
-		val_DeviceDescription = "Isode Sample Radio Device"
 	}
 	if val_UniqueID == "" {
 		val_UniqueID = "SAMPLE_RADIO_1"
@@ -252,13 +229,22 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 		val_Alert = "INFO"
 	}
 
-	return &Device{DeviceType: devicetype, VSWR: val_VSWR, PowerSupplyVoltage: val_PowerSupplyVoltage,
-		PowerSupplyConsumption: val_PowerSupplyConsumption, Temperature: val_Temperature,
-		SignalLevel: val_SignalLevel, Frequency: val_Frequency,
-		TransmissionPower: val_TransmissionPower, Modem: val_Modem, Antenna: val_Antenna,
-		Status: val_Status, StartTime: val_StartTime, RunningSince: val_RunningSince,
-		Version: val_Version, Alert: val_Alert, DeviceTypeHash: val_DeviceTypeHash,
-		DeviceDescription: val_DeviceDescription, UniqueID: val_UniqueID}, nil
+	return &Device{
+		DeviceType:             devicetype,
+		VSWR:                   val_VSWR,
+		PowerSupplyVoltage:     val_PowerSupplyVoltage,
+		PowerSupplyConsumption: val_PowerSupplyConsumption,
+		Temperature:            val_Temperature,
+		SignalLevel:            val_SignalLevel,
+		Frequency:              val_Frequency,
+		TransmissionPower:      val_TransmissionPower,
+		Status:                 val_Status,
+		StartTime:              val_StartTime,
+		RunningSince:           val_RunningSince,
+		Version:                val_Version,
+		Alert:                  val_Alert,
+		DeviceTypeHash:         val_DeviceTypeHash,
+		UniqueID:               val_UniqueID}, nil
 }
 
 func ViewHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -292,7 +278,6 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	val_RunningSince := r.FormValue("RunningSince")
 	val_Version := r.FormValue("Version")
 	val_DeviceTypeHash := r.FormValue("DeviceTypeHash")
-	val_DeviceDescription := r.FormValue("DeviceDescription")
 	val_UniqueID := r.FormValue("UniqueID")
 	val_Alert := r.FormValue("Alert")
 
@@ -307,7 +292,6 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		RunningSince:           val_RunningSince,
 		Version:                val_Version,
 		DeviceTypeHash:         val_DeviceTypeHash,
-		DeviceDescription:      val_DeviceDescription,
 		UniqueID:               val_UniqueID,
 		Alert:                  val_Alert,
 	}
@@ -389,13 +373,12 @@ func GetAllRefParams(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 
 	device_info, err := LoadDeviceInfo(ps.ByName("device"))
 	map_status := map[string]string{"Status": device_info.Status,
-		"RunningSince":      device_info.RunningSince,
-		"Version":           device_info.Version,
-		"DeviceTypeHash":    device_info.DeviceTypeHash,
-		"DeviceDescription": device_info.DeviceDescription,
-		"UniqueID":          device_info.UniqueID,
-		"StartTime":         device_info.StartTime,
-		"Alert":             device_info.Alert}
+		"RunningSince":   device_info.RunningSince,
+		"Version":        device_info.Version,
+		"DeviceTypeHash": device_info.DeviceTypeHash,
+		"UniqueID":       device_info.UniqueID,
+		"StartTime":      device_info.StartTime,
+		"Alert":          device_info.Alert}
 	if err == nil {
 		json.NewEncoder(w).Encode(map_status)
 	}
@@ -414,13 +397,11 @@ func SetControlParam(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	}
 
 	device_info, err := LoadDeviceInfo(ps.ByName("device"))
-	var val_Frequency, val_TransmissionPower, val_Modem, val_Antenna string
+	var val_Frequency, val_TransmissionPower string
 
 	// Fetch the control parameters before overwriting the file
 	val_Frequency = device_info.Frequency
 	val_TransmissionPower = device_info.TransmissionPower
-	val_Modem = device_info.Modem
-	val_Antenna = device_info.Antenna
 
 	filename := device_info.DeviceType + ".control"
 
@@ -434,17 +415,9 @@ func SetControlParam(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	if val, ok := control_params["TransmissionPower"]; ok {
 		val_TransmissionPower = val
 	}
-	if val, ok := control_params["Modem"]; ok {
-		val_Modem = val
-	}
-	if val, ok := control_params["Antenna"]; ok {
-		val_Antenna = val
-	}
 
 	f.WriteString("[Frequency][" + val_Frequency + "]\n")
 	f.WriteString("[TransmissionPower][" + val_TransmissionPower + "]\n")
-	f.WriteString("[Modem][" + val_Modem + "]\n")
-	f.WriteString("[Antenna][" + val_Antenna + "]\n")
 	fmt.Fprint(w, "Device parameters updated !\n")
 }
 

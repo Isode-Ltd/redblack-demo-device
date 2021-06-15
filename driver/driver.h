@@ -54,7 +54,7 @@ class Driver {
     std::string schema_file;       // Device schema file
     std::string std_params_file;   // Device standard parameters file
 
-    std::map<std::string, std::string> control_param_val;  // Map to store device status param and its value
+    std::map<std::string, std::string> control_param_val;  // Map to store device control param and its value
     std::map<std::string, std::string> status_param_val;   // Map to store device status param and its value
     std::map<std::string, std::string> ref_param_val;      // Map to store referenced status param and its value
 

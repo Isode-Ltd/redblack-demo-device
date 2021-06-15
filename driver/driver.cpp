@@ -253,6 +253,7 @@ void Driver :: SendDeviceStatus ( std::map<std::string, std::string>& current_de
         cbor :: binary data = cbor :: encode(status_msg);
         cbor item = cbor :: tagged (24, data);
         item.write(std::cout);
+        fflush(stdout);
     }
 }
 
@@ -302,6 +303,7 @@ void Driver :: SendRefStatus ( std::map<std::string, std::string>& current_ref_p
         cbor :: binary data = cbor :: encode(status_msg);
         cbor item = cbor :: tagged (24, data);
         item.write(std::cout);
+        fflush(stdout);
     }
 }
 
@@ -506,6 +508,7 @@ void IsodeRadioDriver :: SendHTTPRequest (const std::string& rb_msg) {
             cbor :: binary data = cbor :: encode(status_msg);
             cbor item = cbor :: tagged (24, data);
             item.write(std::cout);
+            fflush(stdout);
         } else {
             // TBD
         }

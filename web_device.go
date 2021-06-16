@@ -28,6 +28,9 @@ type Device struct {
 	Frequency         string `json:"Frequency"`
 	TransmissionPower string `json:"TransmissionPower"`
 
+	// Referenced control parameters
+	Enabled string `json:"Enabled"`
+
 	// Referenced status parameters
 	DeviceType     string `json:"DeviceType"`
 	Status         string `json:"Status"`
@@ -37,8 +40,6 @@ type Device struct {
 	Alert          string `json:"Alert"`
 	DeviceTypeHash string `json:"DeviceTypeHash"`
 	UniqueID       string `json:"UniqueID"`
-
-	// Referenced control parameters
 }
 
 func check(e error) {
@@ -170,7 +171,7 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 	defer control_file.Close()
 
 	scanner = bufio.NewScanner(control_file)
-	var val_Frequency, val_TransmissionPower string
+	var val_Enabled, val_Frequency, val_TransmissionPower string
 
 	for scanner.Scan() {
 		line = scanner.Text()
@@ -183,6 +184,9 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 			}
 			if match[1] == "TransmissionPower" {
 				val_TransmissionPower = match[2]
+			}
+			if match[1] == "Enabled" {
+				val_Enabled = match[2]
 			}
 		}
 	}
@@ -211,6 +215,9 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 	if val_TransmissionPower == "" {
 		val_TransmissionPower = "10000"
 	}
+	if val_Enabled == "" {
+		val_Enabled = "true"
+	}
 
 	// Set the default values for referenced status params.
 	if val_DeviceTypeHash == "" {
@@ -238,6 +245,7 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 		SignalLevel:            val_SignalLevel,
 		Frequency:              val_Frequency,
 		TransmissionPower:      val_TransmissionPower,
+		Enabled:                val_Enabled,
 		Status:                 val_Status,
 		StartTime:              val_StartTime,
 		RunningSince:           val_RunningSince,
@@ -397,11 +405,12 @@ func SetControlParam(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	}
 
 	device_info, err := LoadDeviceInfo(ps.ByName("device"))
-	var val_Frequency, val_TransmissionPower string
+	var val_Frequency, val_TransmissionPower, val_Enabled string
 
 	// Fetch the control parameters before overwriting the file
 	val_Frequency = device_info.Frequency
 	val_TransmissionPower = device_info.TransmissionPower
+	val_Enabled = device_info.Enabled
 
 	filename := device_info.DeviceType + ".control"
 
@@ -415,9 +424,13 @@ func SetControlParam(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	if val, ok := control_params["TransmissionPower"]; ok {
 		val_TransmissionPower = val
 	}
+	if val, ok := control_params["Enabled"]; ok {
+		val_Enabled = val
+	}
 
 	f.WriteString("[Frequency][" + val_Frequency + "]\n")
 	f.WriteString("[TransmissionPower][" + val_TransmissionPower + "]\n")
+	f.WriteString("[Enabled][" + val_Enabled + "]\n")
 	fmt.Fprint(w, "Device parameters updated !\n")
 }
 

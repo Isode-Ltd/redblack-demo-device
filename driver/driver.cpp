@@ -64,6 +64,7 @@ void Driver :: GetParamDetails (const std::string& rb_msg,
     if ( std::regex_search(rb_msg, param_match, param_regex) ) {
 
         if ( control_param_type.find(param_match[1]) != control_param_type.end() ) {
+
             param_category = "CONTROL";
             param_name = param_match[1];
             param_type = control_param_type[param_name];
@@ -75,6 +76,24 @@ void Driver :: GetParamDetails (const std::string& rb_msg,
             if ( std::regex_search(encaps_value, value_match, value_regex) ) {
                 param_value = value_match[1];
             }
+        } else if ( std_param_type.find(param_match[1]) != std_param_type.end() ) {
+
+            param_category = "STDPARAM";
+            param_name = param_match[1];
+            param_type = std_param_type[param_name];
+
+            std :: string encaps_value(param_match[2]);
+            std :: regex value_regex("<.+>(.*)</.+>");
+            std :: smatch value_match;
+
+            if ( std::regex_search(encaps_value, value_match, value_regex) ) {
+                param_value = value_match[1];
+            }
+        } else if ( param_match[1] == "SendParameters" ) {
+
+            param_category = "REFCONTROL";
+            param_name = param_match[1];
+            param_type = "NONE";
         }
     }
 }
@@ -489,12 +508,15 @@ void IsodeRadioDriver :: SendHTTPRequest (const std::string& rb_msg) {
     std :: string param_value("");
 
     Driver :: GetParamDetails (rb_msg, param_category, param_name, param_type, param_value);
+    BOOST_LOG_SEV(lg, info) << "Param Category : [" << param_category << "]" << " Name : [" << param_name \
+        << "] Value : [" << param_value << "]";
 
     std :: string target("/device/" + Driver :: GetDeviceName() + "/control");
 
     // Send HTTP Post Request
-    if ( param_category == "CONTROL" ) {
-        std :: string response = HTTPPost(target, param_name, param_value);
+    if ( param_category == "CONTROL" || param_category == "STDPARAM" ) {
+
+        std:: string response = HTTPPost(target, param_name, param_value);
         if ( response == "SUCCESS" ) {
             std::string msg = Driver :: GetStatusMsgFormat();
             msg = std::regex_replace(msg, std::regex("_paramname_"), param_name);
@@ -509,8 +531,10 @@ void IsodeRadioDriver :: SendHTTPRequest (const std::string& rb_msg) {
             cbor item = cbor :: tagged (24, data);
             item.write(std::cout);
             fflush(stdout);
-        } else {
-            // TBD
+        }
+    } else if ( param_category == "REFCONTROL") {
+        if (param_name == "SendParameters") {
+            //TBD
         }
     }
 }

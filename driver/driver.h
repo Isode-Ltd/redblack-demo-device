@@ -55,12 +55,8 @@ class Driver {
     std::string std_params_file;   // Device standard parameters file
 
     std::map<std::string, std::string> control_param_val;  // Map to store device control param and its value
-    std::map<std::string, std::string> status_param_val;   // Map to store device status param and its value
-    std::map<std::string, std::string> ref_param_val;      // Map to store referenced status param and its value
-
-    std::map<std::string, std::string> control_param_type; // Map to store device control param and its type
-    std::map<std::string, std::string> status_param_type;  // Map to store device status param and its type
-    std::map<std::string, std::string> std_param_type;    // Map to store standard param name and its type
+    std::map<std::string, std::string> param_name_val;      // Map to store referenced status param and its value
+    std::map<std::string, std::string> param_name_type;    // Map to store device (status/control/std) param and its type.
 
     std::set<std::string> ptype;              // Set to store the parameter type
     std::string status_msg_format;            // Generic format of the status message to be sent to RB server
@@ -85,12 +81,8 @@ class Driver {
     // Parse the XML device schema and store the device status & control params.
     void Load();
 
-    // Send the device status params to RB.
-    void SendDeviceStatus(std::map<std::string, std::string>& current_dev_status, bool send_all_param);
-
-    // Send the referenced status to RB.
-    void SendRefStatus(std::map<std::string, std::string>& current_ref_params, bool send_all_param);
-
+    // Send the status of all params to RB.
+    void SendStatus(std::map<std::string, std::string>& current_status, bool send_all_param);
 };
 
 class IsodeRadioDriver : public Driver {

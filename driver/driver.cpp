@@ -39,6 +39,15 @@ std :: string Driver :: GetDeviceName(void) {
     return device_name;
 }
 
+void Driver :: SendHeartBeat(int MONITOR_TIME) {
+    std::time_t time_now = std::time(nullptr);
+    std::string msg = status_msg_format;
+    msg = std::regex_replace(msg, std::regex("_paramname_"), "Heartbeat");
+    msg = std::regex_replace(msg, std::regex("_paramtype_"), param_name_type["Heartbeat"]);
+    msg = std::regex_replace(msg, std::regex("_paramvalue_"), std::to_string(time_now + MONITOR_TIME));
+    SendCBOR(msg);
+}
+
 void Driver :: GetParamDetails (const std::string& rb_msg,
                                 std::string& param_category,
                                 std::string& param_name,
@@ -210,6 +219,15 @@ void Driver :: Load () {
     }
 }
 
+void Driver :: SendCBOR (const std::string & msg) {
+    // Create a CBOR status message before sending it to STDOUT
+    cbor status_msg(msg);
+    cbor :: binary data = cbor :: encode(status_msg);
+    cbor item = cbor :: tagged (24, data);
+    item.write(std::cout);
+    fflush(stdout);
+}
+
 // SendStatus function would send the status of all the device params (Status/Control/RefControl) to RB server
 // if send_all_param is set to true. If it is set to false, it would only send the status
 // of the updated device status params.
@@ -227,12 +245,12 @@ void Driver :: SendStatus ( std::map<std::string, std::string>& current_params,
             std::map<std::string, std::string>::iterator it;
             it = current_params.find(entry.first);
             if ( it != current_params.end() ) {
-                // This device status param value has not been updated.
+                // This device param value has not been updated.
                 // Hence remove it.
                 if ( current_params[entry.first] == entry.second ) {
                     current_params.erase(it);
                 } else {
-                    // Update the in memory status_param_val
+                    // Update the in memory param_name_val
                     param_name_val[entry.first] = current_params[entry.first];
                 }
             }
@@ -252,12 +270,7 @@ void Driver :: SendStatus ( std::map<std::string, std::string>& current_params,
             param_name_val[entry.first] = entry.second;
 
         BOOST_LOG_SEV(lg, info) << "Sending device status params to RB : [" << msg << "]";
-        // Create a CBOR status message before sending it to STDOUT
-        cbor status_msg(msg);
-        cbor :: binary data = cbor :: encode(status_msg);
-        cbor item = cbor :: tagged (24, data);
-        item.write(std::cout);
-        fflush(stdout);
+        SendCBOR(msg);
     }
 }
 
@@ -461,11 +474,7 @@ void IsodeRadioDriver :: SendHTTPRequest (const std::string& rb_msg) {
             msg += "\n";
             BOOST_LOG_SEV(lg, info) << "Sending status messages : [" << msg << "]";
             // Create a CBOR referenced status message before sending it to STDOUT
-            cbor status_msg(msg);
-            cbor :: binary data = cbor :: encode(status_msg);
-            cbor item = cbor :: tagged (24, data);
-            item.write(std::cout);
-            fflush(stdout);
+            SendCBOR(msg);
         }
     } else if ( param_category == "REFCONTROL") {
         if (param_name == "SendParameters") {
@@ -508,8 +517,12 @@ void IsodeRadioDriver :: Start (void) {
     bool all_params_flag = true;
     // Report initial status of the device params to the RB server.
     ReportStatusToRB(all_params_flag);
+
     // Initial status of the device has been reported, now start the monitoring timer.
-    auto start = std::chrono::system_clock::now();
+    auto timenow = std::chrono::system_clock::now();
+
+    // Send the first heart beat message
+    Driver::SendHeartBeat(MONITOR_TIME);
 
     std::condition_variable cv;
     std::mutex mutex_;
@@ -537,6 +550,11 @@ void IsodeRadioDriver :: Start (void) {
         // from the device and send the same to RB.
         std::lock_guard<std::mutex> lock_main(mutex_);
         BOOST_LOG_SEV(lg, info) << "Monitoring device status";
+
+        // Send heartbeat to RB
+        SendHeartBeat(MONITOR_TIME);
+
+        // Send status of updated param to RB
         all_params_flag = false;
         ReportStatusToRB(all_params_flag);
     }

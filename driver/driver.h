@@ -81,6 +81,12 @@ class Driver {
     // Parse the XML device schema and store the device status & control params.
     void Load();
 
+    // Send heartbeat message to RB
+    void SendHeartBeat(int MONITOR_TIME);
+
+    // Create and send CBOR message to RB
+    void SendCBOR(const std::string& msg);
+
     // Send the status of all params to RB.
     void SendStatus(std::map<std::string, std::string>& current_status, bool send_all_param);
 };

@@ -32,10 +32,10 @@ type Device struct {
 	Enabled string `json:"Enabled"`
 
 	// Referenced status parameters
-	DeviceType     string `json:"DeviceType"`
-	Status         string `json:"Status"`
-	StartTime      string `json:"StartTime"`
-	RunningSince   string `json:"RunningSince"`
+	DeviceType string `json:"DeviceType"`
+	Status     string `json:"Status"`
+	StartTime  string `json:"StartTime"`
+	// RunningSince   string `json:"RunningSince"`
 	Version        string `json:"Version"`
 	Alert          string `json:"Alert"`
 	DeviceTypeHash string `json:"DeviceTypeHash"`
@@ -72,7 +72,7 @@ func (p *Device) save() error {
 	DeviceType := p.DeviceType
 	Status := p.Status
 	StartTime := p.StartTime
-	RunningSince := p.RunningSince
+	//RunningSince := p.RunningSince
 	Version := p.Version
 	Alert := p.Alert
 	DeviceTypeHash := p.DeviceTypeHash
@@ -81,7 +81,7 @@ func (p *Device) save() error {
 	f.WriteString("[DeviceType][" + DeviceType + "]\n")
 	f.WriteString("[Status][" + Status + "]\n")
 	f.WriteString("[StartTime][" + StartTime + "]\n")
-	f.WriteString("[RunningSince][" + RunningSince + "]\n")
+	//f.WriteString("[RunningSince][" + RunningSince + "]\n")
 	f.WriteString("[Version][" + Version + "]\n")
 	f.WriteString("[Alert][" + Alert + "]\n")
 	f.WriteString("[DeviceTypeHash][" + DeviceTypeHash + "]\n")
@@ -114,11 +114,11 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 	var line string
 	var val_VSWR, val_PowerSupplyVoltage, val_PowerSupplyConsumption string
 	var val_Temperature, val_SignalLevel string
-	var val_Status, val_StartTime, val_RunningSince string
+	var val_Status, val_StartTime string
 	var val_Version, val_Alert, val_UniqueID, val_DeviceTypeHash string
 
 	val_StartTime = start_time_.Format("2006-01-02 15:04:05")
-	val_RunningSince = time.Now().Sub(start_time_).String()
+	// = time.Now().Sub(start_time_).String()
 
 	for scanner.Scan() {
 		line = scanner.Text()
@@ -248,11 +248,11 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 		Enabled:                val_Enabled,
 		Status:                 val_Status,
 		StartTime:              val_StartTime,
-		RunningSince:           val_RunningSince,
-		Version:                val_Version,
-		Alert:                  val_Alert,
-		DeviceTypeHash:         val_DeviceTypeHash,
-		UniqueID:               val_UniqueID}, nil
+		//RunningSince:           val_RunningSince,
+		Version:        val_Version,
+		Alert:          val_Alert,
+		DeviceTypeHash: val_DeviceTypeHash,
+		UniqueID:       val_UniqueID}, nil
 }
 
 func ViewHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -283,7 +283,7 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	val_SignalLevel := r.FormValue("SignalLevel")
 	val_Status := r.FormValue("Status")
 	val_StartTime := r.FormValue("StartTime")
-	val_RunningSince := r.FormValue("RunningSince")
+	//val_RunningSince := r.FormValue("RunningSince")
 	val_Version := r.FormValue("Version")
 	val_DeviceTypeHash := r.FormValue("DeviceTypeHash")
 	val_UniqueID := r.FormValue("UniqueID")
@@ -297,11 +297,11 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		SignalLevel:            val_SignalLevel,
 		Status:                 val_Status,
 		StartTime:              val_StartTime,
-		RunningSince:           val_RunningSince,
-		Version:                val_Version,
-		DeviceTypeHash:         val_DeviceTypeHash,
-		UniqueID:               val_UniqueID,
-		Alert:                  val_Alert,
+		//RunningSince:           val_RunningSince,
+		Version:        val_Version,
+		DeviceTypeHash: val_DeviceTypeHash,
+		UniqueID:       val_UniqueID,
+		Alert:          val_Alert,
 	}
 
 	err := p.save()
@@ -338,7 +338,6 @@ func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 func GetAllDeviceParams(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	device_info, err := LoadDeviceInfo(ps.ByName("device"))
-
 	if err == nil {
 		json.NewEncoder(w).Encode(device_info)
 	}
@@ -381,7 +380,7 @@ func GetAllRefParams(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 
 	device_info, err := LoadDeviceInfo(ps.ByName("device"))
 	map_status := map[string]string{"Status": device_info.Status,
-		"RunningSince":   device_info.RunningSince,
+		//"RunningSince":   device_info.RunningSince,
 		"Version":        device_info.Version,
 		"DeviceTypeHash": device_info.DeviceTypeHash,
 		"UniqueID":       device_info.UniqueID,

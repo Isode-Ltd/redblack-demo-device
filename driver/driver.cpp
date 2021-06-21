@@ -84,7 +84,7 @@ void Driver :: GetParamDetails (const std::string& rb_msg,
             if ( std::regex_search(encaps_value, value_match, value_regex) ) {
                 param_value = value_match[1];
             }
-        }  else if ( param_match[1] == "SendParameters" ) {
+        }  else if ( param_match[1] == "SendParameters" || param_match[1] == "Reset" ) {
             param_category = "REFCONTROL";
             param_name = param_match[1];
             param_type = "NONE";
@@ -459,11 +459,9 @@ void IsodeRadioDriver :: SendHTTPRequest (const std::string& rb_msg) {
     BOOST_LOG_SEV(lg, info) << "Param Category : [" << param_category << "]" << " Name : [" << param_name \
         << "] Value : [" << param_value << "]";
 
-    std :: string target("/device/" + Driver :: GetDeviceName() + "/control");
-
     // Send HTTP Post Request
     if ( param_category == "CONTROL" ) {
-
+        std :: string target("/device/" + Driver :: GetDeviceName() + "/control");
         std:: string response = HTTPPost(target, param_name, param_value);
         if ( response == "SUCCESS" ) {
             std::string msg = Driver :: GetStatusMsgFormat();
@@ -480,6 +478,16 @@ void IsodeRadioDriver :: SendHTTPRequest (const std::string& rb_msg) {
         if (param_name == "SendParameters") {
             bool all_params_flag = true;
             ReportStatusToRB(all_params_flag);
+        } else if (param_name == "Reset") {
+            std :: string target("/device/" + Driver :: GetDeviceName() + "/reset");
+            std :: map<std::string, std::string> current_params;
+            std :: string response = HTTPGet(target, current_params);
+            if ( response == "SUCCESS" ) {
+                BOOST_LOG_SEV(lg, info) << "Device " << GetDeviceName() << " Reset Succcessfully !!";
+                // Send the values of the parameters to RB
+                bool all_params_flag = true;
+                Driver :: SendStatus(current_params, all_params_flag);
+            }
         }
     }
 }

@@ -84,10 +84,12 @@ void Driver :: GetParamDetails (const std::string& rb_msg,
             if ( std::regex_search(encaps_value, value_match, value_regex) ) {
                 param_value = value_match[1];
             }
-        }  else if ( param_match[1] == "SendParameters" || param_match[1] == "Reset" ) {
+        }  else if ( param_match[1] == "SendParameters" ||
+                     param_match[1] == "Reset" ||
+                     param_match[1] == "PowerOff" ) {
             param_category = "REFCONTROL";
             param_name = param_match[1];
-            param_type = "NONE";
+            param_type = "EMPTY";
         }
     }
 }
@@ -484,6 +486,16 @@ void IsodeRadioDriver :: SendHTTPRequest (const std::string& rb_msg) {
             std :: string response = HTTPGet(target, current_params);
             if ( response == "SUCCESS" ) {
                 BOOST_LOG_SEV(lg, info) << "Device " << GetDeviceName() << " Reset Succcessfully !!";
+                // Send the values of the parameters to RB
+                bool all_params_flag = true;
+                Driver :: SendStatus(current_params, all_params_flag);
+            }
+        } else if (param_name == "PowerOff") {
+            std :: string target("/device/" + Driver :: GetDeviceName() + "/poweroff");
+            std :: map<std::string, std::string> current_params;
+            std :: string response = HTTPGet(target, current_params);
+            if ( response == "SUCCESS" ) {
+                BOOST_LOG_SEV(lg, info) << "Device " << GetDeviceName() << " Powered Off Succcessfully !!";
                 // Send the values of the parameters to RB
                 bool all_params_flag = true;
                 Driver :: SendStatus(current_params, all_params_flag);

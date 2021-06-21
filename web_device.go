@@ -338,6 +338,71 @@ func GetAllDeviceParams(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	}
 }
 
+func PowerOff(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
+	var val_VSWR, val_PowerSupplyVoltage, val_PowerSupplyConsumption string
+	var val_Temperature, val_SignalLevel string
+	var val_Status, val_StartTime string
+	var val_DeviceType string
+	var val_Version, val_Alert, val_UniqueID, val_DeviceTypeHash string
+	var val_Enabled, val_Frequency, val_TransmissionPower string
+
+	//var control_params map[string]string
+	fmt.Println("\n=============== Message from driver ===================")
+	fmt.Println("Turn-Off Requested")
+	fmt.Println("================= End of Message ====================")
+
+	val_DeviceType = ps.ByName("device")
+	// Set the default values for device status params.
+	val_VSWR = "00"
+	val_PowerSupplyVoltage = "000"
+	val_PowerSupplyConsumption = "00000"
+	val_Temperature = "000"
+	val_SignalLevel = "0"
+	// Set the default values for device control params.
+	val_Frequency = "00000"
+	val_TransmissionPower = "00000"
+	val_Enabled = "true"
+	// Set the default values for referenced status params.
+	val_DeviceTypeHash = "#ISODERADIO"
+	val_UniqueID = "SAMPLE_RADIO_1"
+	val_Version = "1.0"
+	val_Status = "OFF"
+	val_Alert = "NONE"
+
+	filename := val_DeviceType + ".status"
+	status_file, err := os.Create(filename)
+	check(err)
+	defer status_file.Close()
+
+	status_file.WriteString("[VSWR][" + val_VSWR + "]\n")
+	status_file.WriteString("[PowerSupplyVoltage][" + val_PowerSupplyVoltage + "]\n")
+	status_file.WriteString("[PowerSupplyConsumption][" + val_PowerSupplyConsumption + "]\n")
+	status_file.WriteString("[Temperature][" + val_Temperature + "]\n")
+	status_file.WriteString("[SignalLevel][" + val_SignalLevel + "]\n")
+	status_file.WriteString("[DeviceType][" + val_DeviceType + "]\n")
+	status_file.WriteString("[Status][" + val_Status + "]\n")
+	status_file.WriteString("[StartTime][" + val_StartTime + "]\n")
+	status_file.WriteString("[Version][" + val_Version + "]\n")
+	status_file.WriteString("[Alert][" + val_Alert + "]\n")
+	status_file.WriteString("[DeviceTypeHash][" + val_DeviceTypeHash + "]\n")
+	status_file.WriteString("[UniqueID][" + val_UniqueID + "]\n")
+
+	filename = val_DeviceType + ".control"
+	control_file, err := os.Create(filename)
+	check(err)
+	defer control_file.Close()
+
+	control_file.WriteString("[Frequency][" + val_Frequency + "]\n")
+	control_file.WriteString("[TransmissionPower][" + val_TransmissionPower + "]\n")
+	control_file.WriteString("[Enabled][" + val_Enabled + "]\n")
+
+	device_info, err := LoadDeviceInfo(ps.ByName("device"))
+	if err == nil {
+		json.NewEncoder(w).Encode(device_info)
+	}
+}
+
 func ResetDevice(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	var val_VSWR, val_PowerSupplyVoltage, val_PowerSupplyConsumption string
@@ -511,6 +576,7 @@ func main() {
 	router.GET("/device/:device", GetAllDeviceParams)
 	router.GET("/device/:device/status", GetAllDeviceStatus)
 	router.GET("/device/:device/reset", ResetDevice)
+	router.GET("/device/:device/poweroff", PowerOff)
 	router.GET("/device/:device/ref", GetAllRefParams)
 	router.POST("/device/:device/control", SetControlParam)
 	log.Fatal(http.ListenAndServe(":8082", router))

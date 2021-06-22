@@ -39,6 +39,10 @@ std :: string Driver :: GetDeviceName(void) {
     return device_name;
 }
 
+std :: string Driver :: GetDeviceType(void) {
+    return device_type;
+}
+
 void Driver :: SendHeartBeat(int MONITOR_TIME) {
     std::time_t time_now = std::time(nullptr);
     std::string msg = status_msg_format;
@@ -66,7 +70,6 @@ void Driver :: GetParamDetails (const std::string& rb_msg,
         </Control>
     */
 
-    // Replace "Status" with "Control" case sensitive in the below block.
     std :: regex param_regex("<.*<Param>(.*)</Param>(.*)</Control>");
     std :: smatch param_match;
 
@@ -522,14 +525,36 @@ void IsodeRadioDriver :: SendMsgToDevice (const std::string& rb_msg) {
     SendHTTPRequest(rb_msg);
 }
 
+void IsodeRadioDriver :: SendAlert () {
+
+    using namespace logging::trivial;
+    src::severity_logger<severity_level> lg;
+
+    std :: string device_name = Driver :: GetDeviceName();
+    std :: string target("/device/" + device_name);
+    std :: map<std::string, std::string> current_params;
+
+    if ( "SUCCESS" != HTTPGet(target, current_params))
+        return;
+
+    std::string msg = "<Status><Device>_devicename_</Device><DeviceType>_devicetype_</DeviceType><Param>Alert</Param><_alerttype_></_alerttype_><AlertMessage>_alertmessage_</AlertMessage></Status>";
+    msg = std::regex_replace(msg, std::regex("_devicename_"), device_name);
+    msg = std::regex_replace(msg, std::regex("_devicetype_"), GetDeviceType());
+    msg = std::regex_replace(msg, std::regex("_alerttype_"), current_params["Alert"]);
+    msg = std::regex_replace(msg, std::regex("_alertmessage_"), current_params["AlertMessage"]);
+
+    BOOST_LOG_SEV(lg, info) << "Sending alert message to RB : [" << msg << "]";
+    SendCBOR(msg);
+}
+
 void IsodeRadioDriver :: Start (void) {
 
-    Driver :: InitLogging();
+    InitLogging();
     using namespace logging::trivial;
     src::severity_logger<severity_level> lg;
 
     try {
-        Driver :: Load();
+        Load();
     } catch (std::exception &e) {
         std::cout << "Error: " << e.what() << "\n";
     }
@@ -542,7 +567,7 @@ void IsodeRadioDriver :: Start (void) {
     auto timenow = std::chrono::system_clock::now();
 
     // Send the first heart beat message
-    Driver::SendHeartBeat(MONITOR_TIME);
+    SendHeartBeat(MONITOR_TIME);
 
     std::condition_variable cv;
     std::mutex mutex_;
@@ -573,6 +598,9 @@ void IsodeRadioDriver :: Start (void) {
 
         // Send heartbeat to RB
         SendHeartBeat(MONITOR_TIME);
+
+        // Send alert message to RB
+        SendAlert();
 
         // Send status of updated param to RB
         all_params_flag = false;

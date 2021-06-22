@@ -67,6 +67,7 @@ class Driver {
 
     ~Driver();
 
+    std::string GetDeviceType(void);
     std::string GetDeviceName(void);
     std::string GetStatusMsgFormat(void);
 
@@ -125,4 +126,8 @@ class IsodeRadioDriver : public Driver {
 
     // Send HTTP Post request to the rb device to modify device control parameters.
     std::string HTTPPost(const std::string& target_device, const std::string& param, const std::string& value);
+
+    // Send alert message to RB
+    void SendAlert(void);
+
 };

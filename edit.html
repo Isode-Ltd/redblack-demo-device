@@ -138,8 +138,12 @@
                     <td><textarea name="StartTime" rows="2" cols="20" readonly>{{printf "%s" .StartTime}}</textarea></td>
                 </tr>
                 <tr>
-                    <td><b>Alert</b> ( INFO / WARN / ERROR / FATAL )</td>
+                    <td><b>Alert</b> ( Info / Warning / Error / Severe / Critical )</td>
                     <td><textarea name="Alert" rows="2" cols="20">{{printf "%s" .Alert}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Alert Message</b></td>
+                    <td><textarea name="AlertMessage" rows="2" cols="20">{{printf "%s" .AlertMessage}}</textarea></td>
                 </tr>
             </table>
         </div>

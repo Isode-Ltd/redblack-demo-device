@@ -38,6 +38,7 @@ type Device struct {
 	// RunningSince   string `json:"RunningSince"`
 	Version        string `json:"Version"`
 	Alert          string `json:"Alert"`
+	AlertMessage   string `json:"AlertMessage"`
 	DeviceTypeHash string `json:"DeviceTypeHash"`
 	UniqueID       string `json:"UniqueID"`
 }
@@ -75,6 +76,7 @@ func (p *Device) save() error {
 	//RunningSince := p.RunningSince
 	Version := p.Version
 	Alert := p.Alert
+	AlertMessage := p.AlertMessage
 	DeviceTypeHash := p.DeviceTypeHash
 	UniqueID := p.UniqueID
 
@@ -84,6 +86,7 @@ func (p *Device) save() error {
 	//f.WriteString("[RunningSince][" + RunningSince + "]\n")
 	f.WriteString("[Version][" + Version + "]\n")
 	f.WriteString("[Alert][" + Alert + "]\n")
+	f.WriteString("[AlertMessage][" + AlertMessage + "]\n")
 	f.WriteString("[DeviceTypeHash][" + DeviceTypeHash + "]\n")
 	f.WriteString("[UniqueID][" + UniqueID + "]\n")
 
@@ -110,7 +113,7 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 	var val_VSWR, val_PowerSupplyVoltage, val_PowerSupplyConsumption string
 	var val_Temperature, val_SignalLevel string
 	var val_Status, val_StartTime string
-	var val_Version, val_Alert, val_UniqueID, val_DeviceTypeHash string
+	var val_Version, val_Alert, val_AlertMessage, val_UniqueID, val_DeviceTypeHash string
 
 	val_StartTime = start_time_.Format("2006-01-02 15:04:05")
 	// = time.Now().Sub(start_time_).String()
@@ -144,6 +147,9 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 			}
 			if match[1] == "Alert" {
 				val_Alert = match[2]
+			}
+			if match[1] == "AlertMessage" {
+				val_AlertMessage = match[2]
 			}
 			if match[1] == "DeviceTypeHash" {
 				val_DeviceTypeHash = match[2]
@@ -228,7 +234,10 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 		val_Status = "RUNNING"
 	}
 	if val_Alert == "" {
-		val_Alert = "INFO"
+		val_Alert = "Info"
+	}
+	if val_AlertMessage == "" {
+		val_AlertMessage = "Parameters within limit."
 	}
 
 	return &Device{
@@ -246,6 +255,7 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 		//RunningSince:           val_RunningSince,
 		Version:        val_Version,
 		Alert:          val_Alert,
+		AlertMessage:   val_AlertMessage,
 		DeviceTypeHash: val_DeviceTypeHash,
 		UniqueID:       val_UniqueID}, nil
 }
@@ -283,6 +293,7 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	val_DeviceTypeHash := r.FormValue("DeviceTypeHash")
 	val_UniqueID := r.FormValue("UniqueID")
 	val_Alert := r.FormValue("Alert")
+	val_AlertMessage := r.FormValue("AlertMessage")
 
 	p := &Device{DeviceType: ps.ByName("device"),
 		VSWR:                   val_VSWR,
@@ -297,6 +308,7 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		DeviceTypeHash: val_DeviceTypeHash,
 		UniqueID:       val_UniqueID,
 		Alert:          val_Alert,
+		AlertMessage:   val_AlertMessage,
 	}
 
 	err := p.save()
@@ -344,7 +356,7 @@ func PowerOff(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var val_Temperature, val_SignalLevel string
 	var val_Status, val_StartTime string
 	var val_DeviceType string
-	var val_Version, val_Alert, val_UniqueID, val_DeviceTypeHash string
+	var val_Version, val_Alert, val_AlertMessage, val_UniqueID, val_DeviceTypeHash string
 	var val_Enabled, val_Frequency, val_TransmissionPower string
 
 	//var control_params map[string]string
@@ -369,6 +381,7 @@ func PowerOff(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	val_Version = "1.0"
 	val_Status = "OFF"
 	val_Alert = "NONE"
+	val_AlertMessage = "NONE"
 
 	filename := val_DeviceType + ".status"
 	status_file, err := os.Create(filename)
@@ -385,6 +398,7 @@ func PowerOff(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	status_file.WriteString("[StartTime][" + val_StartTime + "]\n")
 	status_file.WriteString("[Version][" + val_Version + "]\n")
 	status_file.WriteString("[Alert][" + val_Alert + "]\n")
+	status_file.WriteString("[AlertMessage][" + val_AlertMessage + "]\n")
 	status_file.WriteString("[DeviceTypeHash][" + val_DeviceTypeHash + "]\n")
 	status_file.WriteString("[UniqueID][" + val_UniqueID + "]\n")
 
@@ -409,7 +423,7 @@ func ResetDevice(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var val_Temperature, val_SignalLevel string
 	var val_Status, val_StartTime string
 	var val_DeviceType string
-	var val_Version, val_Alert, val_UniqueID, val_DeviceTypeHash string
+	var val_Version, val_Alert, val_AlertMessage, val_UniqueID, val_DeviceTypeHash string
 	var val_Enabled, val_Frequency, val_TransmissionPower string
 
 	//var control_params map[string]string
@@ -433,7 +447,8 @@ func ResetDevice(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	val_UniqueID = "SAMPLE_RADIO_1"
 	val_Version = "1.0"
 	val_Status = "RUNNING"
-	val_Alert = "INFO"
+	val_Alert = "Info"
+	val_AlertMessage = "Parameters within limit."
 
 	filename := val_DeviceType + ".status"
 	status_file, err := os.Create(filename)
@@ -450,6 +465,7 @@ func ResetDevice(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	status_file.WriteString("[StartTime][" + val_StartTime + "]\n")
 	status_file.WriteString("[Version][" + val_Version + "]\n")
 	status_file.WriteString("[Alert][" + val_Alert + "]\n")
+	status_file.WriteString("[AlertMessage][" + val_AlertMessage + "]\n")
 	status_file.WriteString("[DeviceTypeHash][" + val_DeviceTypeHash + "]\n")
 	status_file.WriteString("[UniqueID][" + val_UniqueID + "]\n")
 
@@ -510,7 +526,8 @@ func GetAllRefParams(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		"DeviceTypeHash": device_info.DeviceTypeHash,
 		"UniqueID":       device_info.UniqueID,
 		"StartTime":      device_info.StartTime,
-		"Alert":          device_info.Alert}
+		"Alert":          device_info.Alert,
+		"AlertMessage":   device_info.AlertMessage}
 	if err == nil {
 		json.NewEncoder(w).Encode(map_status)
 	}

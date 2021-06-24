@@ -121,16 +121,6 @@ func (p *Device) CheckLimit() bool {
 		return false
 	}
 
-	Frequency, _ := strconv.Atoi(p.Frequency)
-	if Frequency < 3000 || Frequency > 30000 {
-		return false
-	}
-
-	TransmissionPower, _ := strconv.Atoi(p.TransmissionPower)
-	if TransmissionPower < 1 || TransmissionPower > 20000 {
-		return false
-	}
-
 	return true
 }
 

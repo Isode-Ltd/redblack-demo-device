@@ -436,6 +436,9 @@ func SaveHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			p.Alert = "Warning"
 		}
 		p.AlertMessage = "Parameters beyond range."
+	} else {
+		p.Alert = "Info"
+		p.AlertMessage = "Parameters within range."
 	}
 
 	err := p.save()

@@ -1,11 +1,12 @@
 ## Radio Device
 This web device emulates isoderadio. Just like an actual radio device, the web-device has control and status parameters. The control parameters could be modified using a Red-Black server, where as the status parameters could be modified directly on the device using a web user interface.
 
-Example :
+**Example** :
 If you are running this web device named as radiotest on a localhost, then the device parameters could be viewed on URL : http://localhost:8082/view/radiotest
 
 The device status paramters could be modified on URL : http://localhost:8082/edit/radiotest
-Note : The name of the example device [radiotest] is same as the device configured in Red-Black.
+
+**Note** : The name of the example device [radiotest] is same as the device configured in Red-Black.
 
 ## Driver
 For operating the isoderadio device (ex: radiotest) and modifying its parameters, the Red-Black server interfaces with a driver which sends commands to the device and receives the status of various device parameters before sending it to the Red-Black server.

@@ -157,7 +157,7 @@ void Driver :: Load () {
             }
             // If the next found tag is param_type (String, Integer, Boolean,...),
             // store the earlier found param and param type.
-            else if (found and ptype.find(tag) != ptype.end()) {
+            else if (found && ptype.find(tag) != ptype.end()) {
                 param_name_type.insert(std::pair<std::string,std::string>(param_name, tag));
                 BOOST_LOG_SEV(lg, info) << "Param [" << param_name << "], Type [" << tag << "]";
                 found = false;

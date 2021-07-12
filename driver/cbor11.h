@@ -1,8 +1,8 @@
 // This is free and unencumbered software released into the public domain.
 #pragma once
-#if __cplusplus < 201103
-#warning "To enable all features you must compile with -std=c++11"
-#endif
+//#if __cplusplus < 201103
+//#warning "To enable all features you must compile with -std=c++11"
+//#endif
 #include <iostream>
 #include <map>
 #include <stdint.h>

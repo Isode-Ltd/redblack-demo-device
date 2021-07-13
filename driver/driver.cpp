@@ -262,7 +262,16 @@ void Driver :: SendStatus ( std::map<std::string, std::string>& current_params,
         }
     }
 
+    // Alert and AlertMessage are sent to RB in SendAlert function, hence skip these while sending status.
+    // Some params like DeviceTypeHash are set only on RB hence skip sending it.
+    std::string params_to_skip[]  = {"Alert", "AlertMessage", "DeviceTypeHash"};
+    std::set<std::string> skip(params_to_skip, params_to_skip + sizeof(params_to_skip)/sizeof(params_to_skip[0]));
+
     for ( const auto& entry : current_params ) {
+
+        if (skip.find(entry.first) != skip.end())
+            continue;
+
         std::string msg = status_msg_format;
         msg = std::regex_replace(msg, std::regex("_paramname_"), entry.first);
         msg = std::regex_replace(msg, std::regex("_paramtype_"), param_name_type[entry.first]);

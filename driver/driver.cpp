@@ -25,6 +25,11 @@ Driver :: Driver(std::string dev_name, std::string arg_schema_file, std::string 
     ptype.insert(param_types, param_types + sizeof(param_types)/sizeof(param_types[0]));
 
     status_msg_format = "<Status><Device>" + dev_name + "</Device><DeviceType>_devicetype_</DeviceType><Param>_paramname_</Param><_paramtype_>_paramvalue_</_paramtype_></Status>\n";
+
+#ifdef _WIN32
+	setmode(fileno(stdout), O_BINARY);
+	setmode(fileno(stdin), O_BINARY);
+#endif
 }
 
 Driver :: ~Driver() {

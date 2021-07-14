@@ -44,6 +44,11 @@
 
 #include "cbor11.h"
 
+#ifdef _WIN32
+#include <io.h>
+#include <fcntl.h>
+#endif
+
 class Driver {
 
     private:

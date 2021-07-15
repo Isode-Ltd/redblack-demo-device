@@ -337,7 +337,7 @@ func LoadDeviceInfo(devicetype string) (*Device, error) {
 		val_Version = "1.0"
 	}
 	if val_Status == "" {
-		val_Status = "RUNNING"
+		val_Status = "Operational"
 	}
 
 	// Set the default values for alert.
@@ -499,7 +499,7 @@ func PowerOff(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	val_DeviceTypeHash = "#ISODERADIO"
 	val_UniqueID = "SAMPLE_RADIO_1"
 	val_Version = "1.0"
-	val_Status = "OFFLINE"
+	val_Status = "Not Operational"
 	val_Alert = "NONE"
 	val_AlertMessage = "NONE"
 
@@ -566,7 +566,7 @@ func ResetDevice(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	val_DeviceTypeHash = "#ISODERADIO"
 	val_UniqueID = "SAMPLE_RADIO_1"
 	val_Version = "1.0"
-	val_Status = "RUNNING"
+	val_Status = "Operational"
 	val_Alert = "Info"
 	val_AlertMessage = "Parameters within limit."
 

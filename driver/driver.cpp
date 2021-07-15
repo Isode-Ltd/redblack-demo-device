@@ -299,7 +299,7 @@ IsodeRadioDriver :: IsodeRadioDriver (std::string dev_host, std::string dev_port
     device_host = dev_host;
     device_port = dev_port;
 
-    MONITOR_TIME = 60;
+    MONITOR_TIME = 5;
     // HTTP version
     version = 11;
 }

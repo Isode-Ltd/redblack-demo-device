@@ -523,16 +523,30 @@ void IsodeRadioDriver :: SendHTTPRequest (const std::string& rb_msg) {
 
 void IsodeRadioDriver :: ReportStatusToRB (bool all_params_flag) {
 
+    using namespace logging::trivial;
+    src::severity_logger<severity_level> lg;
+
     // Fetch the current params values
     std :: string device_name = Driver :: GetDeviceName();
     std :: string target("/device/" + device_name);
     std :: map<std::string, std::string> current_params;
     std :: string response = HTTPGet(target, current_params);
 
+    std::string status_msg = "<Status><Device>_devicename_</Device><DeviceType>_devicetype_</DeviceType><Param>Status</Param><Enumerated>Operational</Enumerated></Status>";
+    status_msg = std::regex_replace(status_msg, std::regex("_devicename_"), device_name);
+    status_msg = std::regex_replace(status_msg, std::regex("_devicetype_"), GetDeviceType());
+
     if ( response == "SUCCESS" ) {
         // Send the values of the parameters to RB
         Driver :: SendStatus(current_params, all_params_flag);
+        BOOST_LOG_SEV(lg, info) << "Device [" << device_name << "] operational.";
+    } else {
+        // Device not responding.
+        status_msg = std::regex_replace(status_msg, std::regex("Operational"), "Not Operational");
+        BOOST_LOG_SEV(lg, info) << "Device [" << device_name << "] not responding.";
     }
+    BOOST_LOG_SEV(lg, info) << "Sending device status to RB : [" << status_msg << "]";
+    SendCBOR(status_msg);
 }
 
 void IsodeRadioDriver :: SendMsgToDevice (const std::string& rb_msg) {
@@ -548,7 +562,7 @@ void IsodeRadioDriver :: SendAlert () {
     std :: string target("/device/" + device_name);
     std :: map<std::string, std::string> current_params;
 
-    if ( "SUCCESS" != HTTPGet(target, current_params))
+    if ("SUCCESS" != HTTPGet(target, current_params))
         return;
 
     std::string msg = "<Status><Device>_devicename_</Device><DeviceType>_devicetype_</DeviceType><Param>Alert</Param><_alerttype_></_alerttype_><AlertMessage>_alertmessage_</AlertMessage></Status>";
@@ -616,8 +630,9 @@ void IsodeRadioDriver :: Start (void) {
         // Send alert message to RB
         SendAlert();
 
-        // Send status of updated param to RB
+        // Send status of the updated params to RB
         all_params_flag = false;
+        BOOST_LOG_SEV(lg, info) << "Querying status of the device";
         ReportStatusToRB(all_params_flag);
     }
 }

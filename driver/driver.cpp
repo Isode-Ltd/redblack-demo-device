@@ -243,6 +243,14 @@ void Driver :: SendCBOR (const std::string & msg) {
     fflush(stdout);
 }
 
+void Driver :: UpdateDeviceParam(const std::string& param, const std::string& value) {
+    param_name_val[param] = value;
+}
+
+std::string Driver :: GetParamValue(const std::string& param) {
+    return param_name_val[param];
+}
+
 // SendStatus function would send the status of all the device params (Status/Control/RefControl) to RB server
 // if send_all_param is set to true. If it is set to false, it would only send the status
 // of the updated device status params.
@@ -538,6 +546,9 @@ void IsodeRadioDriver :: ReportStatusToRB (bool all_params_flag) {
     status_msg = std::regex_replace(status_msg, std::regex("_devicetype_"), GetDeviceType());
 
     if (HTTPGet(target, current_params)) {
+        if (Driver::GetParamValue("Status") == "Not Operational") {
+            status_msg = std::regex_replace(status_msg, std::regex("Operational"), "Not Operational");
+        }
         // Send the values of the parameters to RB
         Driver :: SendStatus(current_params, all_params_flag);
         BOOST_LOG_SEV(lg, info) << "Device [" << device_name << "] operational.";
@@ -545,7 +556,9 @@ void IsodeRadioDriver :: ReportStatusToRB (bool all_params_flag) {
         // Device not responding.
         status_msg = std::regex_replace(status_msg, std::regex("Operational"), "Not Operational");
         BOOST_LOG_SEV(lg, info) << "Device [" << device_name << "] not responding.";
+        Driver :: UpdateDeviceParam("Status", "Not Operational");
     }
+
     BOOST_LOG_SEV(lg, info) << "Sending device status to RB : [" << status_msg << "]";
     SendCBOR(status_msg);
 }

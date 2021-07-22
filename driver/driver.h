@@ -59,8 +59,7 @@ class Driver {
     std::string schema_file;       // Device schema file
     std::string std_params_file;   // Device standard parameters file
 
-    std::map<std::string, std::string> control_param_val;  // Map to store device control param and its value
-    std::map<std::string, std::string> param_name_val;      // Map to store referenced status param and its value
+    std::map<std::string, std::string> param_name_val;     // Map to store param (device status/control/std params) and its value
     std::map<std::string, std::string> param_name_type;    // Map to store device (status/control/std) param and its type.
 
     std::set<std::string> ptype;              // Set to store the parameter type
@@ -92,6 +91,12 @@ class Driver {
 
     // Create and send CBOR message to RB
     void SendCBOR(const std::string& msg);
+
+    // Update the status of the device when it stops responding
+    void UpdateDeviceParam(const std::string& name, const std::string& val);
+
+    // Return a parameter value.
+    std::string GetParamValue(const std::string& param);
 
     // Send the status of all params to RB.
     void SendStatus(std::map<std::string, std::string>& current_status, bool send_all_param);

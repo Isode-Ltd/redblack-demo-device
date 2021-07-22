@@ -75,29 +75,34 @@ void Driver :: GetParamDetails (const std::string& rb_msg,
         </Control>
     */
 
-    std :: regex param_regex("<.*<Param>(.*)</Param>(.*)</Control>");
-    std :: smatch param_match;
+    // Create empty property tree object
+    pt::ptree param_tree;
 
-    if ( std::regex_search(rb_msg, param_match, param_regex) ) {
+    try {
+        std :: stringstream ss;
+        ss << rb_msg;
+        read_xml(ss, param_tree);
+    } catch (pt::xml_parser_error &e) {
+        BOOST_LOG_SEV(lg, info) << "Failed to parse control xml message from RB. " << e.what();
+    } catch (...) {
+        BOOST_LOG_SEV(lg, info) << "Failed to read RB control message.";
+    }
 
-        if ( param_name_type.find(param_match[1]) != param_name_type.end() ) {
-            param_category = "CONTROL";
-            param_name = param_match[1];
-            param_type = param_name_type[param_name];
+    for (auto& v : param_tree.get_child("Control")) {
 
-            std :: string encaps_value(param_match[2]);
-            std :: regex value_regex("<.+>(.*)</.+>");
-            std :: smatch value_match;
+        std::string attr = v.first.data();
 
-            if ( std::regex_search(encaps_value, value_match, value_regex) ) {
-                param_value = value_match[1];
+        if (attr == "Param") {
+            param_name = v.second.data();
+            if (param_name_type.find(param_name) != param_name_type.end()) {
+                param_category = "CONTROL";
+                param_type = param_name_type[param_name];
+            } else if (param_name == "SendParameters" || param_name == "Reset" || param_name == "PowerOff") {
+                param_category = "REFCONTROL";
+                param_type = "EMPTY";
             }
-        }  else if ( param_match[1] == "SendParameters" ||
-                     param_match[1] == "Reset" ||
-                     param_match[1] == "PowerOff" ) {
-            param_category = "REFCONTROL";
-            param_name = param_match[1];
-            param_type = "EMPTY";
+        } else if (v.first.data() == param_type && param_category == "CONTROL") {
+            param_value = v.second.data();
         }
     }
 }
@@ -306,7 +311,7 @@ IsodeRadioDriver :: IsodeRadioDriver (std::string dev_host, std::string dev_port
 
 // Send the HTTP Get request to the web device and fetch all the
 // device status and deivce control params.
-std :: string IsodeRadioDriver :: HTTPGet (const std::string& target, std::map<std::string, std::string>& stat_param_value) {
+bool IsodeRadioDriver :: HTTPGet (const std::string& target, std::map<std::string, std::string>& stat_param_value) {
 
     using namespace logging::trivial;
     src::severity_logger<severity_level> lg;
@@ -382,14 +387,14 @@ std :: string IsodeRadioDriver :: HTTPGet (const std::string& target, std::map<s
         // If we get here then the connection is closed gracefully
     } catch ( std::exception const& e ) {
         BOOST_LOG_SEV(lg, info) << "Error : " << e.what() << std::endl;
-        return "ERROR";
+        return false;
     }
-    return "SUCCESS";
+    return true;
 }
 
 // Send the HTTP Post request to the web device and set the
 // device control params.
-std :: string IsodeRadioDriver :: HTTPPost (const std::string& target,
+bool IsodeRadioDriver :: HTTPPost (const std::string& target,
                                   const std::string& param,
                                   const std::string& value) {
     using namespace logging::trivial;
@@ -455,9 +460,9 @@ std :: string IsodeRadioDriver :: HTTPPost (const std::string& target,
         // If we get here then the connection is closed gracefully
     } catch ( std::exception const& e ) {
         BOOST_LOG_SEV(lg, info) << "Error: " << e.what();
-        return "ERROR";
+        return false;
     }
-    return "SUCCESS";
+    return true;
 }
 
 // Send the HTTP request ( Get / Post ) to the web device based
@@ -481,8 +486,7 @@ void IsodeRadioDriver :: SendHTTPRequest (const std::string& rb_msg) {
     // Send HTTP Post Request
     if ( param_category == "CONTROL" ) {
         std :: string target("/device/" + Driver :: GetDeviceName() + "/control");
-        std:: string response = HTTPPost(target, param_name, param_value);
-        if ( response == "SUCCESS" ) {
+        if (HTTPPost(target, param_name, param_value)) {
             std::string msg = Driver :: GetStatusMsgFormat();
             msg = std::regex_replace(msg, std::regex("_paramname_"), param_name);
             msg = std::regex_replace(msg, std::regex("_paramtype_"), param_type);
@@ -500,8 +504,7 @@ void IsodeRadioDriver :: SendHTTPRequest (const std::string& rb_msg) {
         } else if (param_name == "Reset") {
             std :: string target("/device/" + Driver :: GetDeviceName() + "/reset");
             std :: map<std::string, std::string> current_params;
-            std :: string response = HTTPGet(target, current_params);
-            if ( response == "SUCCESS" ) {
+            if (HTTPGet(target, current_params)) {
                 BOOST_LOG_SEV(lg, info) << "Device " << GetDeviceName() << " Reset Succcessfully !!";
                 // Send the values of the parameters to RB
                 bool all_params_flag = true;
@@ -510,8 +513,7 @@ void IsodeRadioDriver :: SendHTTPRequest (const std::string& rb_msg) {
         } else if (param_name == "PowerOff") {
             std :: string target("/device/" + Driver :: GetDeviceName() + "/poweroff");
             std :: map<std::string, std::string> current_params;
-            std :: string response = HTTPGet(target, current_params);
-            if ( response == "SUCCESS" ) {
+            if (HTTPGet(target, current_params)) {
                 BOOST_LOG_SEV(lg, info) << "Device " << GetDeviceName() << " Powered Off Succcessfully !!";
                 // Send the values of the parameters to RB
                 bool all_params_flag = true;
@@ -530,13 +532,12 @@ void IsodeRadioDriver :: ReportStatusToRB (bool all_params_flag) {
     std :: string device_name = Driver :: GetDeviceName();
     std :: string target("/device/" + device_name);
     std :: map<std::string, std::string> current_params;
-    std :: string response = HTTPGet(target, current_params);
 
     std::string status_msg = "<Status><Device>_devicename_</Device><DeviceType>_devicetype_</DeviceType><Param>Status</Param><Enumerated>Operational</Enumerated></Status>";
     status_msg = std::regex_replace(status_msg, std::regex("_devicename_"), device_name);
     status_msg = std::regex_replace(status_msg, std::regex("_devicetype_"), GetDeviceType());
 
-    if ( response == "SUCCESS" ) {
+    if (HTTPGet(target, current_params)) {
         // Send the values of the parameters to RB
         Driver :: SendStatus(current_params, all_params_flag);
         BOOST_LOG_SEV(lg, info) << "Device [" << device_name << "] operational.";
@@ -562,7 +563,7 @@ void IsodeRadioDriver :: SendAlert () {
     std :: string target("/device/" + device_name);
     std :: map<std::string, std::string> current_params;
 
-    if ("SUCCESS" != HTTPGet(target, current_params))
+    if (!HTTPGet(target, current_params))
         return;
 
     std::string msg = "<Status><Device>_devicename_</Device><DeviceType>_devicetype_</DeviceType><Param>Alert</Param><_alerttype_></_alerttype_><AlertMessage>_alertmessage_</AlertMessage></Status>";
@@ -609,6 +610,8 @@ void IsodeRadioDriver :: Start (void) {
             std::ostringstream obj;
             item.write(obj);
             std::string rb_msg = obj.str();
+            std::size_t first = rb_msg.find("<Control");
+            rb_msg = rb_msg.erase(0, first);
             std::lock_guard<std::mutex> lock(mutex_);
             SendMsgToDevice(rb_msg);
         }
@@ -641,7 +644,7 @@ int main (int argc, char * argv[]) {
 
     boost::program_options::options_description desc
         ("\nMandatory arguments marked with '*'.\n"
-           "Invocation : <drive_executable> --host <hostname> --port <port> <device_name> <schema_file> <std_params_file>\nAgruments");
+           "Invocation : <driver_executable> --host <hostname> --port <port> <device_name> <schema_file> <std_params_file>\nAgruments");
 
     desc.add_options ()
     ("host", boost::program_options::value<std::string>()->required(),

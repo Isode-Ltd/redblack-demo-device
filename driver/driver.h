@@ -18,7 +18,7 @@
 // Device schema parsing
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
+#include <boost/property_tree/detail/file_parser_error.hpp>
 
 // Sending HTTP Get / Post to devices
 #include <boost/beast/core.hpp>
@@ -127,10 +127,10 @@ class IsodeRadioDriver : public Driver {
     void SendHTTPRequest(const std::string& rb_msg);
 
     // Send HTTP Get request to the rb device and get the status using device status parameters.
-    std::string HTTPGet(const std::string& target_device, std::map<std::string, std::string>& status_param_val);
+    bool HTTPGet(const std::string& target_device, std::map<std::string, std::string>& status_param_val);
 
     // Send HTTP Post request to the rb device to modify device control parameters.
-    std::string HTTPPost(const std::string& target_device, const std::string& param, const std::string& value);
+    bool HTTPPost(const std::string& target_device, const std::string& param, const std::string& value);
 
     // Send alert message to RB
     void SendAlert(void);

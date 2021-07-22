@@ -36,33 +36,33 @@ $ ./web_device
 #### Connect to the web-device
 
 ```bash
-Browser URL : http://localhost:8080/view/radiotest
+Browser URL : http://localhost:8082/view/radiotest
 ```
 
 #### Fetch the status of the web-device parameters using CLI
 Example:
 ```bash
 
-$ curl -X GET "http://localhost:8080/device/radiotest/ref"
+$ curl -X GET "http://localhost:8082/device/radiotest/ref"
 {"Alert":"INFO","DeviceTypeHash":"#ABCDE","RunningSince":"1m11.795971925s","StartTime":"2021-06-03 17:34:40","Status":"Enabled","UniqueId":"1232","Version":"1.0"}
 
-$ curl -X GET "http://localhost:8080/device/radiotest/status"
+$ curl -X GET "http://localhost:8082/device/radiotest/status"
 {"PowerSupplyConsumption":"300","PowerSupplyVoltage":"20","SignalLevel":"500","Temperature":"40","VSWR":"10"}
 
-$ curl -X GET "http://localhost:8080/device/radiotest"
+$ curl -X GET "http://localhost:8082/device/radiotest"
 {"VSWR":"10","PowerSupplyVoltage":"20","PowerSupplyConsumption":"300","Temperature":"40","SignalLevel":"500","Frequency":"11015","TransmissionPower":"7528","Modem":"","Antenna":"","DeviceType":"radio","Status":"Enabled","StartTime":"2021-06-03 17:34:40","RunningSince":"1m34.998094147s","Version":"1.0","Alert":"INFO","DeviceTypeHash":"#ABCDE","UniqueId":"1232","DeviceDescription":""}
 
-$ curl -X GET "http://localhost:8080/device/radiotest/param/signallevel"
+$ curl -X GET "http://localhost:8082/device/radiotest/param/signallevel"
 "5"
 
-$ curl -X GET "http://localhost:8080/device/radiotest/param/vswr"
+$ curl -X GET "http://localhost:8082/device/radiotest/param/vswr"
 "50"
 ```
 
 #### Set the control parameters of the web-device
 Example:
 ```bash
-$ $ curl --header "Content-Type: application/json" -X POST "http://localhost:8080/device/radiotest/control" --data '{"Frequency":"26000","TransmissionPower":"8000", "Modem":"Audio", "Antenna":"RF"}'
+$ $ curl --header "Content-Type: application/json" -X POST "http://localhost:8082/device/radiotest/control" --data '{"Frequency":"26000","TransmissionPower":"8000", "Modem":"Audio", "Antenna":"RF"}'
 ```
 
 #### Compiling C++ driver

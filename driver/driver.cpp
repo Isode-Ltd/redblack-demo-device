@@ -663,12 +663,23 @@ int main (int argc, char * argv[]) {
     ("host", boost::program_options::value<std::string>()->required(),
                  "Hostname.")
     ("port",  boost::program_options::value<std::string>()->required(),
-                 "Port");
+                 "Port")
+    ("device_name",  boost::program_options::value<std::string>()->required(),
+                 "Port")
+    ("schema_file",  boost::program_options::value<std::string>()->required(),
+                 "Schema File")
+    ("std_params_file",  boost::program_options::value<std::string>()->required(),
+                 "Standard Params File");
+
+    boost::program_options::positional_options_description pos_desc;
+    pos_desc.add("device_name", 1);
+    pos_desc.add("schema_file", 1);
+    pos_desc.add("std_params_file", 1);
 
     boost::program_options::variables_map vm;
 
     try {
-        boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(desc).run(), vm);
+        boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(desc).positional(pos_desc).run(), vm);
         boost::program_options::notify(vm);
     } catch (boost::program_options::error& e) {
         std::cout << "ERROR: " << e.what() << "\n";
@@ -686,9 +697,9 @@ int main (int argc, char * argv[]) {
     // the device status and device control params.
     std :: string host(vm["host"].as<std::string>());
     std :: string port(vm["port"].as<std::string>());
-    std :: string name(argv[5]);
-    std :: string schemafile(argv[6]);
-    std :: string stdparamsfile(argv[7]);
+    std :: string name(vm["device_name"].as<std::string>());
+    std :: string schemafile(vm["schema_file"].as<std::string>());
+    std :: string stdparamsfile(vm["std_params_file"].as<std::string>());
 
     IsodeRadioDriver radiodriver(host, port, name, schemafile, stdparamsfile);
 

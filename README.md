@@ -67,9 +67,28 @@ $ $ curl --header "Content-Type: application/json" -X POST "http://localhost:808
 
 #### Compiling C++ driver
 
-Note: The web-device driver needs Boost 1.74.0 installed. [https://www.boost.org/doc/libs/1_74_0/]
+Note: The web-device driver needs Boost 1.74.0 or a higher version.
+Download Link : https://www.boost.org/users/history/version_1_74_0.html
+
+Build and install boost
+Unix
+https://www.boost.org/doc/libs/1_74_0/more/getting_started/unix-variants.html#easy-build-and-install
+
+Windows
+https://www.boost.org/doc/libs/1_74_0/more/getting_started/windows.html#simplified-build-from-source
+
+
+Running cmake
+
+Unix
 Run the below commands inside the driver directory.
 ```bash
-web-device/driver$ cmake .
-web-device/driver$ make
+driver$ cmake .
+driver$ make
+```
+
+Windows
+```bash
+driver> cmake .
+Build the driver project (driver.sln) using VS Studio 2015 Update 3
 ```

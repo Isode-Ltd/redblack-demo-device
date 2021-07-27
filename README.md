@@ -13,6 +13,11 @@ For operating the isoderadio device (ex: radiotest) and modifying its parameters
 
 ### Compiling the Golang based web-device
 
+Install Go
+```
+https://golang.org/doc/install
+```
+
 Go module https://github.com/julienschmidt/httprouter needs to be installed locally.
 ```bash
 $ go get github.com/julienschmidt/httprouter

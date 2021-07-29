@@ -94,10 +94,10 @@ Windows
 https://www.boost.org/doc/libs/1_76_0/more/getting_started/windows.html#simplified-build-from-source
 
 **Running cmake**
-After doing a Boost build and install, use CMake / CMake GUI to configure the driver.
+* After doing a Boost build and install, use CMake / CMake GUI to configure the driver.
 
 **Unix**
-Run the below commands inside the driver directory.
+* Run the below commands inside the driver directory.
 ```bash
 driver$ cmake .
 driver$ make

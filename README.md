@@ -72,14 +72,22 @@ $ $ curl --header "Content-Type: application/json" -X POST "http://localhost:808
 
 #### Compiling C++ driver
 
+Download and install cmake (minimum version 3.10)
+https://cmake.org/download/
+
+Install Visual Studio 2015 Update 3
+
 Note: The web-device driver needs Boost 1.74.0 or a higher version.
-Download Link : https://www.boost.org/users/history/version_1_74_0.html
+Download Link : https://www.boost.org/users/history/version_1_76_0.html
 
 Build and install boost
+
 Unix
-https://www.boost.org/doc/libs/1_74_0/more/getting_started/unix-variants.html#easy-build-and-install
+
+https://www.boost.org/doc/libs/1_76_0/more/getting_started/unix-variants.html#easy-build-and-install
 
 Windows
+
 https://www.boost.org/doc/libs/1_74_0/more/getting_started/windows.html#simplified-build-from-source
 
 

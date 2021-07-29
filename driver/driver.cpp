@@ -660,16 +660,16 @@ int main (int argc, char * argv[]) {
            "Invocation : <driver_executable> --host <hostname> --port <port> <device_name> <schema_file> <std_params_file>\nAgruments");
 
     desc.add_options ()
-    ("* host", boost::program_options::value<std::string>()->required(),
-                 "Hostname.")
-    ("* port",  boost::program_options::value<std::string>()->required(),
-                 "Port")
-    ("* device_name",  boost::program_options::value<std::string>()->required(),
-                 "Device Name")
-    ("* schema_file",  boost::program_options::value<std::string>()->required(),
-                 "Schema File")
-    ("* std_params_file",  boost::program_options::value<std::string>()->required(),
-                 "Standard Params File");
+    ("host", boost::program_options::value<std::string>()->required(),
+                 "* Hostname.")
+    ("port",  boost::program_options::value<std::string>()->required(),
+                 "* Port")
+    ("device_name",  boost::program_options::value<std::string>()->required(),
+                 "* Device Name")
+    ("schema_file",  boost::program_options::value<std::string>()->required(),
+                 "* Schema File")
+    ("std_params_file",  boost::program_options::value<std::string>()->required(),
+                 "* Standard Params File");
 
     boost::program_options::positional_options_description pos_desc;
     pos_desc.add("device_name", 1);

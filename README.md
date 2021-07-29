@@ -28,6 +28,7 @@ $ go mod init HTTP_ROUTER
 ```
 
 #### Compile the web-device
+
 ```bash
 $ go build web_device.go
 ```
@@ -75,12 +76,14 @@ $ $ curl --header "Content-Type: application/json" -X POST "http://localhost:808
 Download and install cmake (minimum version 3.10)
 https://cmake.org/download/
 
+**On Windows**
 Install Visual Studio 2015 Update 3
 
-Note: The web-device driver needs Boost 1.74.0 or a higher version.
-Download Link : https://www.boost.org/users/history/version_1_76_0.html
+**Note:** The web-device driver needs Boost 1.74.0 or a higher version.
 
-Build and install boost
+**Download Link** : https://www.boost.org/users/history/version_1_76_0.html
+
+**Build and install boost**
 
 Unix
 
@@ -88,20 +91,23 @@ https://www.boost.org/doc/libs/1_76_0/more/getting_started/unix-variants.html#ea
 
 Windows
 
-https://www.boost.org/doc/libs/1_74_0/more/getting_started/windows.html#simplified-build-from-source
+https://www.boost.org/doc/libs/1_76_0/more/getting_started/windows.html#simplified-build-from-source
 
+**Running cmake**
+After doing a Boost build and install, use CMake / CMake GUI to configure the driver.
 
-Running cmake
-
-Unix
+**Unix**
 Run the below commands inside the driver directory.
 ```bash
 driver$ cmake .
 driver$ make
 ```
 
-Windows
-```bash
-driver> cmake .
-Build the driver project (driver.sln) using VS Studio 2015 Update 3
-```
+**Windows**
+In CMake GUI
+* Specify the source location of driver directory
+* Set the generator for driver to Visual Studio 14 2015.
+* In the CMake environment variables, you might need to specify BOOST_ROOT pointing to the location of the boost installation directory.
+
+After successfully configuring and generating the driver solution using CMake, do
+* Build the driver project (driver.sln) using VS Studio 2015 Update 3 for generating the driver binary.

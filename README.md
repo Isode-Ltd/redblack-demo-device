@@ -71,7 +71,7 @@ Example:
 $ $ curl --header "Content-Type: application/json" -X POST "http://localhost:8082/device/radiotest/control" --data '{"Frequency":"26000","TransmissionPower":"8000", "Modem":"Audio", "Antenna":"RF"}'
 ```
 
-#### Compiling C++ driver
+### Compiling C++ driver
 
 Download and install cmake (minimum version 3.10)
 https://cmake.org/download/

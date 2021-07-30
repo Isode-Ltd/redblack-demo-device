@@ -77,7 +77,8 @@ Download and install cmake (minimum version 3.10)
 https://cmake.org/download/
 
 **On Windows**
-Install Visual Studio 2015 Update 3
+Install Visual Studio Professional 2015 With Update 3
+Install Microsoft Visual Build Tools for Visual Studio 2015 Update 3
 
 **Note:** The web-device driver needs Boost 1.74.0 or a higher version.
 
@@ -93,6 +94,12 @@ Windows
 
 https://www.boost.org/doc/libs/1_76_0/more/getting_started/windows.html#simplified-build-from-source
 
+For example on Windows:
+```bash
+c:\boost_1_76_0>bootstrap
+c:\boost_1_76_0>b2 -j8 toolset=msvc address-model=64 architecture=x86 link=static threading=multi runtime-link=shared --build-type=complete stage install --prefix="C:\boost"
+```
+
 **Running cmake**
 * After doing a Boost build and install, use CMake / CMake GUI to configure the driver.
 
@@ -104,10 +111,17 @@ driver$ make
 ```
 
 **Windows**
+
 In CMake GUI
-* Specify the source location of driver directory
+* Specify the source location of driver directory and the location to build the binaries.
 * Set the generator for driver to Visual Studio 14 2015.
-* In the CMake environment variables, you might need to specify BOOST_ROOT pointing to the location of the boost installation directory.
+* Choose appropriate optional platform for generator (Win32 / x64).
+* In the CMake environment variables, you might need to specify BOOST_ROOT pointing to the location of the boost installation directory ("c:\boost" in the example above).
 
 After successfully configuring and generating the driver solution using CMake, do
-* Build the driver project (driver.sln) using VS Studio 2015 Update 3 for generating the driver binary.
+* Build the driver project (isode-radio-demo-driver.sln) using VS Studio 2015 Update 3 IDE for generating the driver binary.
+* Or Using Command Line
+<br>Example
+```bash
+C:\Program Files (x86)\Microsoft Visual Studio 14.0>MSBuild.exe c:\driver\isode-demo-radio-driver.sln /property:Configuration=Release
+```

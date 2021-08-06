@@ -1,5 +1,5 @@
 ## Radio Device
-This web device emulates isoderadio. Just like an actual radio device, the web-device has control and status parameters. The control parameters could be modified using a Red-Black server, where as the status parameters could be modified directly on the device using a web user interface.
+This web device emulates isoderadio. Just like an actual radio device, the web device has control and status parameters. The control parameters could be modified using a Red-Black server, where as the status parameters could be modified directly on the device using a web user interface.
 
 **Example** :
 If you are running this web device named as radiotest on a localhost, then the device parameters could be viewed on URL : http://localhost:8082/view/radiotest
@@ -11,41 +11,47 @@ The device status paramters could be modified on URL : http://localhost:8082/edi
 ## Driver
 For operating the isoderadio device (ex: radiotest) and modifying its parameters, the Red-Black server interfaces with a driver which sends commands to the device and receives the status of various device parameters before sending it to the Red-Black server.
 
-### Compiling the Golang based web-device
+### Compiling the Golang based web device
 
 Install Go
 ```
 https://golang.org/doc/install
 ```
 
-Go module https://github.com/julienschmidt/httprouter needs to be installed locally.
+Run the following commands in the device folder.
 ```bash
-$ go get github.com/julienschmidt/httprouter
+device$ go mod init Web_Device
 ```
 
+Install module https://github.com/julienschmidt/httprouter required by the web device.
 ```bash
-$ go mod init HTTP_ROUTER
+device$ go get github.com/julienschmidt/httprouter
 ```
 
-#### Compile the web-device
+#### Compile the web device in the device folder
 
 ```bash
-$ go build web_device.go
+device$ go build web_device.go
 ```
 
-#### Run the web-device
+#### Run the web device in the device folder
+
+Note: The web device binary (web_device), view.html and edit.html template files should be present in the same directory.
 
 ```bash
-$ ./web_device
+device$ ./web_device
 ```
 
-#### Connect to the web-device
+#### Connect to the web device
 
 ```bash
 Browser URL : http://localhost:8082/view/radiotest
 ```
 
-#### Fetch the status of the web-device parameters using CLI
+#### Fetch the status of the web device parameters using CLI
+
+Note : In the below example [radiotest] is a sample web device. This web device could have any name.
+
 Example:
 ```bash
 
@@ -65,7 +71,7 @@ $ curl -X GET "http://localhost:8082/device/radiotest/param/vswr"
 "50"
 ```
 
-#### Set the control parameters of the web-device
+#### Set the control parameters of the web device
 Example:
 ```bash
 $ $ curl --header "Content-Type: application/json" -X POST "http://localhost:8082/device/radiotest/control" --data '{"Frequency":"26000","TransmissionPower":"8000", "Modem":"Audio", "Antenna":"RF"}'
@@ -112,6 +118,19 @@ driver$ make
 
 **Windows**
 
+Using CMake from the a command prompt
+* Ensure that the environment variable BOOST_ROOT points at your Boost installation
+* Run cmake to generate a Visual Studio solution file for the platform (Win32/x64) you need
+* Invoke Visual Studio to build the solution
+
+For example
+
+```bash
+C:\driver> set BOOST_ROOT c:\boost
+C:\driver> cmake -G "Visual Studio 14 2015 Win64"
+C:\driver> msbuild.exe isode-demo-radio-driver.sln /property:Configuration=Release
+```
+
 In CMake GUI
 * Specify the source location of driver directory and the location to build the binaries.
 * Set the generator for driver to Visual Studio 14 2015.
@@ -119,9 +138,9 @@ In CMake GUI
 * In the CMake environment variables, you might need to specify BOOST_ROOT pointing to the location of the boost installation directory ("c:\boost" in the example above).
 
 After successfully configuring and generating the driver solution using CMake, do
-* Build the driver project (isode-radio-demo-driver.sln) using VS Studio 2015 Update 3 IDE for generating the driver binary.
-* Or Using Command Line
+* Open the solution file (isode-radio-demo-driver.sln) using VS Studio 2015 Update 3 IDE and build the binary.
+* Or build from the command line using a command of the form:
 <br>Example
 ```bash
-C:\Program Files (x86)\Microsoft Visual Studio 14.0>MSBuild.exe c:\driver\isode-demo-radio-driver.sln /property:Configuration=Release
+C:\driver> msbuild.exe c:\driver\isode-demo-radio-driver.sln /property:Configuration=Release
 ```

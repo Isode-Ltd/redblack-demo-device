@@ -1,4 +1,4 @@
-module Web_Device
+module isode-device-web-manager
 
 go 1.16
 

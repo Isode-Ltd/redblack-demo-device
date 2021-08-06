@@ -1,17 +1,17 @@
 ## Device
-This repository contains a go program (called 'web_device') which emulates an isode radio. Just like an actual radio, the web_device has control and status parameters. The control parameters could be modified using a Red-Black server, where as the status parameters could be modified directly on the device using a web interface.
+This repository contains a go program (called 'isode-device-web-manager') that manages isode radio dummy devices. Just like an actual isode radio, the dummy web radio device has control and status parameters. The control parameters could be modified using a Red-Black server, where as the status parameters could be modified directly on the device using a web interface provided by the isode-device-web-manager.
 
 **Example** :
-If you are running this web_device named as [radiotest] on a localhost, then the device parameters could be viewed on URL : http://localhost:8082/view/radiotest
+If you are running the isode-device-web-manager on a localhost, it can create a dummy isode radio devices (example radiotest) by accessing the URL : http://localhost:8082/view/radiotest
 
-The device status paramters could be modified on URL : http://localhost:8082/edit/radiotest
+The status paramters of the dummy isode radio device (ex: radiotest) could be modified on URL : http://localhost:8082/edit/radiotest
 
-**Note** : The name of the example web_device [radiotest] is same as the device configured in Red-Black.
+**Note** : The name of the example isode dummy radio device (radiotest) is same as the device name configured in Red-Black.
 
 ## Driver
-For operating the web_device i.e isode radio (ex: radiotest) and modifying its parameters, the Red-Black server interfaces with a driver which sends commands to the web_device and receives the status of various device parameters before sending it to the Red-Black server.
+For operating the dummy radio web device (ex: radiotest) and modifying its parameters, the Red-Black server communicates with a driver which sends commands to the isode-device-web-manager and receives the status of various device parameters before sending it to the Red-Black server.
 
-### Compiling the Golang based web_device
+### Compiling the Golang based isode-device-web-manager
 
 Install Go (1.16)
 ```
@@ -24,29 +24,29 @@ Run the following commands in the device folder.
 device$ go get
 ```
 
-#### Compile the web_device in the device folder
+#### Compile the isode-device-web-manager in the device folder
 
 ```bash
-device$ go build web_device.go
+device$ go build isode-device-web-manager.go
 ```
 
-#### Run the web_device in the device folder
+#### Run the isode-device-web-manager in the device folder
 
-Note: The web_device binary, view.html and edit.html template files should be present in the same directory.
+Note: The isode-device-web-manager binary, view.html and edit.html template files should be present in the same directory.
 
 ```bash
-device$ ./web_device
+device$ ./isode-device-web-manager
 ```
 
-#### Connect to the web_device
+#### Connect to the isode-device-web-manager's sample device radiotest.
 
 ```bash
 Browser URL : http://localhost:8082/view/radiotest
 ```
 
-#### Fetch the status of the web_device parameters using CLI
+#### Fetch the status of the isode-device-web-manager's device (radiotest) parameters using CLI
 
-Note : In the below example [radiotest] is a sample web_device. This web_device could have any name.
+Note : In the below example [radiotest] is a dummy isode radio device managed by isode-device-web-manager. This radio device could have any name.
 
 Example:
 ```bash
@@ -67,7 +67,7 @@ $ curl -X GET "http://localhost:8082/device/radiotest/param/vswr"
 "50"
 ```
 
-#### Set the control parameters of the web_device
+#### Set the control parameters of the dummy isode web device
 Example:
 ```bash
 $ $ curl --header "Content-Type: application/json" -X POST "http://localhost:8082/device/radiotest/control" --data '{"Frequency":"26000","TransmissionPower":"8000", "Modem":"Audio", "Antenna":"RF"}'

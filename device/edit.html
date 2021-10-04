@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link type="text/css" src="css/device.css">
+</head>
+
+<style>
+      * {
+    box-sizing: border-box;
+  }
+
+  body
+  {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    color: #444444;
+    font-size: 13pt;
+    background-color: #FAFAFA;
+  }
+  .button {
+        background-color: #008CBA; /* Green */
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+  }
+
+  .row {
+    margin-left:-5px;
+    margin-right:-5px;
+  }
+
+  .column {
+    float: left;
+    width: 50%;
+    padding: 5px;
+  }
+
+  /* Clearfix (clear floats) */
+  .row::after {
+    content: "";
+    clear: both;
+    display: table;
+  }
+
+  table {
+    border-collapse: collapse;
+    border-spacing: 2;
+    width: 95%;
+    border: 1px solid #ddd;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 16px;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  tr:nth-child(odd) {
+    background-color: white;
+  }
+  #tab-alt th {
+      background-color: black;
+      color: white;
+  }
+  #tab-alt tr:nth-child(even) {
+      background-color: #eee;
+  }
+
+  #tab-alt tr:nth-child(odd) {
+     background-color: white;
+  }
+</style>
+
+<body>
+<h3>Update parameters for the device [{{.DeviceType}}]</h3>
+
+<form action="/save/{{.DeviceType}}" method="GET">
+    <div class="row">
+        <div class="column">
+            <table id="tab-alt">
+                <tr>
+                    <th>Device Status Parameter</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td><b>Voltage Standing Wave Ratio</b> ( 10 - 100 )</td>
+                    <td><textarea name="VSWR" rows="2" cols="20">{{printf "%s" .VSWR}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Power Supply Voltage</b> ( 100 - 400 )</td>
+                    <td><textarea name="PowerSupplyVoltage" rows="2" cols="20">{{printf "%s" .PowerSupplyVoltage}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Power Supply Consumption</b> ( 1 - 100000 )</td>
+                    <td><textarea name="PowerSupplyConsumption" rows="2" cols="20">{{printf "%s" .PowerSupplyConsumption}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Temperature of Radio</b> [ -20 - (+200) ] </td>
+                    <td><textarea name="Temperature" rows="2" cols="20">{{printf "%s" .Temperature}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Signal Level</b> [ (-40) - (+15) ]</td>
+                    <td><textarea name="SignalLevel" rows="2" cols="20">{{printf "%s" .SignalLevel}}</textarea></td>
+                </tr>
+            </table>
+        </div>
+        <div class="column">
+            <table id="tab-alt">
+                <tr>
+                    <th><b>Reference Parameter</b></th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td><b>Devie Type Hash</b></td>
+                    <td><textarea name="DeviceTypeHash" rows="2" cols="20">{{printf "%s" .DeviceTypeHash}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Unique ID</b></td>
+                    <td><textarea name="UniqueID" rows="2" cols="20">{{printf "%s" .UniqueID}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Version</b></td>
+                    <td><textarea name="Version" rows="2" cols="20">{{printf "%s" .Version}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Status</b></td>
+                    <td><textarea name="Status" rows="2" cols="20">{{printf "%s" .Status}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Start Time</b></td>
+                    <td><textarea name="StartTime" rows="2" cols="20" readonly>{{printf "%s" .StartTime}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Alert</b> ( Info / Warning / Error / Severe / Critical )</td>
+                    <td><textarea name="Alert" rows="2" cols="20">{{printf "%s" .Alert}}</textarea></td>
+                </tr>
+                <tr>
+                    <td><b>Alert Message</b></td>
+                    <td><textarea name="AlertMessage" rows="2" cols="20">{{printf "%s" .AlertMessage}}</textarea></td>
+                </tr>
+            </table>
+        </div>
+        <div><input class="button" type="submit" value="Save"></div>
+    </div>
+</form>
+</body>
+</html>

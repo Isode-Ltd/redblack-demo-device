@@ -657,7 +657,7 @@ int main (int argc, char * argv[]) {
 
     boost::program_options::options_description desc
         ("\nMandatory arguments marked with '*'.\n"
-           "Invocation : <driver_executable> --host <hostname> --port <port> <device_name> <schema_file> <std_params_file>\nAgruments");
+           "Invocation : <driver_executable> --host <hostname> --port <port> --device_name <device_name> --schema_file <filename> --std_params_file <filename>\nArguments");
 
     desc.add_options ()
     ("host", boost::program_options::value<std::string>()->required(),
@@ -671,15 +671,10 @@ int main (int argc, char * argv[]) {
     ("std_params_file",  boost::program_options::value<std::string>()->required(),
                  "* Standard Params File");
 
-    boost::program_options::positional_options_description pos_desc;
-    pos_desc.add("device_name", 1);
-    pos_desc.add("schema_file", 1);
-    pos_desc.add("std_params_file", 1);
-
     boost::program_options::variables_map vm;
 
     try {
-        boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(desc).positional(pos_desc).run(), vm);
+        boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(desc).run(), vm);
         boost::program_options::notify(vm);
     } catch (boost::program_options::error& e) {
         std::cout << "ERROR: " << e.what() << "\n";
@@ -687,9 +682,9 @@ int main (int argc, char * argv[]) {
         return 1;
     }
 
-    if (argc < 8) {
+    if (argc < 11) {
         std::cout << "Error !! Check usage below.\n";
-        std::cout << "Invocation : <drive_executable> --host <hostname> --port <port> <device_name> <schema_file> <std_params_file>";
+        std::cout << "Invocation : <driver_executable> --host <hostname> --port <port> --device_name <device_name> --schema_file <filename> --std_params_file <filename>";
         exit(0);
     }
 

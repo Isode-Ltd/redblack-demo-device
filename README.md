@@ -1,3 +1,14 @@
+## ISODE's Red/Black
+Isode’s Red/Black product provides a flexible management capability to manage a wide range of devices.
+
+Refer : https://www.isode.com/products/red-black.html
+
+Every supported device needs an XML Abstract Device Specification and a device driver for the device. This project provides a mock radio device with a Web interface (coded in Go), an XML Abstract Device Specification, and a Red/Black driver (coded in C++). These can be compiled and used with Isode’s Red/Black product.
+
+The intent is to facilitate writing device drivers, by providing a concrete example that device driver writers can use as a starting point. The source code can be downloaded and compiled.
+
+All of this code is provided with a simple Open Source license, so that the code can be used as the basis for writing a real device driver.
+
 ## Device
 This repository contains a go program (called 'isode-device-web-manager') that manages isode radio dummy devices. Just like an actual isode radio, the dummy web radio device has control and status parameters. The control parameters could be modified using a Red-Black server, where as the status parameters could be modified directly on the device using a web interface provided by the isode-device-web-manager.
 

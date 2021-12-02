@@ -167,7 +167,7 @@ Below is the configuration of the sample radio device configured in Red/Black se
 **Template**: IsodeRadio:Basic Radio with mock driver. ( Selected from the drop down )<br>
 **Driver Options**: Custom driver ( Selected from the drop down )<br>
 **Driver**: isode-demo-radio-driver ( The driver binary that is generated after driver compilation )<br>
-**Additional arguments**: `--host localhost --port 8082 --device_name radiotest --schema_file /opt/isode/redblack/share/redblack/schema/isode-radio.xml --std_params_file /opt/isode/redblack/share/redblack/stdparams.xml` ( These arguments are needed by the sample demo driver written for the radio device )
+**Additional arguments**: `--host localhost --port 8082 --device_name radiotest --schema_file /opt/isode/redblack/share/redblack/schema/isode-radio.xml --std_params_file /opt/isode/redblack/share/redblack/stdparams.xml` ( These arguments are needed by the sample demo driver written for the radio device. The path arguments might differ for your particular Red/Black installation. )
 
 Below is the configuration of the sample radio device configured in Red/Black server on **Windows**.
 
@@ -175,6 +175,6 @@ Below is the configuration of the sample radio device configured in Red/Black se
 **Template**: IsodeRadio:Basic Radio with mock driver. ( Selected from the drop down )<br>
 **Driver Options**: Custom driver ( Selected from the drop down )<br>
 **Driver**: isode-demo-radio-driver ( The driver binary that is generated after driver compilation )<br>
-**Additional arguments**: `--host localhost --port 8082 --device_name radiotest --schema_file "C:\Program Files\Isode RedBlack 1.0v7\share\redblack\schema\isode-radio.xml" --std_params_file "C:\Program Files\Isode RedBlack 1.0v7\share\redblack\stdparams.xml"` ( These arguments are needed by the sample demo driver written for the radio device )
+**Additional arguments**: `--host localhost --port 8082 --device_name radiotest --schema_file "C:\Program Files\Isode RedBlack 1.0v7\share\redblack\schema\isode-radio.xml" --std_params_file "C:\Program Files\Isode RedBlack 1.0v7\share\redblack\stdparams.xml"` ( These arguments are needed by the sample demo driver written for the radio device. The path arguments might differ for your particular Red/Black installation. )
 
 After you have configured the Sample Radio device, you can monitor it by visiting e.g. https://localhost:8080/monitor in a web browser.

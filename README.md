@@ -22,6 +22,8 @@ The status paramters of the dummy isode radio device (ex: radiotest) could be mo
 ## Driver
 For operating the dummy radio web device (ex: radiotest) and modifying its parameters, the Red-Black server communicates with a driver which sends commands to the isode-device-web-manager and receives the status of various device parameters before sending it to the Red-Black server.
 
+**Note** : The files _stdparams.xml_ and _isode-radio.xml_ are used for communication between the Red/Black server and the sample device. These files, as well as other device-specific XML files, are shipped as part of the Red/Black installation and are included in this project for reference. If you use this project as a template for your own device driver, then you can create a new device XML file based on isode-radio.xml (e.g. my-own-driver.xml) and install that in the location where the Red/Black server can find it.
+
 ### Compiling the Golang based isode-device-web-manager
 
 Install Go (1.16)
@@ -147,7 +149,32 @@ In CMake GUI
 After successfully configuring and generating the driver solution using CMake, do
 * Open the solution file (isode-radio-demo-driver.sln) using VS Studio 2015 Update 3 IDE and build the binary.
 * Or build from the command line using a command of the form:
-<br>Example
+
+Example
 ```bash
 C:\driver> msbuild.exe c:\driver\isode-demo-radio-driver.sln /property:Configuration=Release
 ```
+
+### Configuring and monitoring the device(s) in Red/Black
+
+Refer to the Red/Black admin guide for the installation and setup of the Red/Black server.
+
+After installing and starting the Red/Black server, connect to it with a web browser (for example, https://localhost:8080). After you have authenticated, use the "Configuration" section and choose the "Device List" option to add a new Sample Radio device.
+
+Below is the configuration of the sample radio device configured in Red/Black server on **Linux**.
+
+**Device Name**: radiotest ( Note : This matches with the device URL [http://localhost:8082/view/radiotest] )<br>
+**Template**: IsodeRadio:Basic Radio with mock driver. ( Selected from the drop down )<br>
+**Driver Options**: Custom driver ( Selected from the drop down )<br>
+**Driver**: isode-demo-radio-driver ( The driver binary that is generated after driver compilation )<br>
+**Additional arguments**: `--host localhost --port 8082 --device_name radiotest --schema_file /opt/isode/redblack/share/redblack/schema/isode-radio.xml --std_params_file /opt/isode/redblack/share/redblack/stdparams.xml` ( These arguments are needed by the sample demo driver written for the radio device. The path arguments might differ for your particular Red/Black installation. )
+
+Below is the configuration of the sample radio device configured in Red/Black server on **Windows**.
+
+**Device Name**: radiotest ( Note : This matches with the device URL [http://localhost:8082/view/radiotest] )<br>
+**Template**: IsodeRadio:Basic Radio with mock driver. ( Selected from the drop down )<br>
+**Driver Options**: Custom driver ( Selected from the drop down )<br>
+**Driver**: isode-demo-radio-driver ( The driver binary that is generated after driver compilation )<br>
+**Additional arguments**: `--host localhost --port 8082 --device_name radiotest --schema_file "C:\Program Files\Isode RedBlack 1.0v7\share\redblack\schema\isode-radio.xml" --std_params_file "C:\Program Files\Isode RedBlack 1.0v7\share\redblack\stdparams.xml"` ( These arguments are needed by the sample demo driver written for the radio device. The path arguments might differ for your particular Red/Black installation. )
+
+After you have configured the Sample Radio device, you can monitor it by visiting e.g. https://localhost:8080/monitor in a web browser.
